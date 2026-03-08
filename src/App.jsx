@@ -185,6 +185,7 @@ export default function HiddenConstellation() {
   return (
     <div style={{
       minHeight: "100vh", background: "#03020b",
+      width: "100vw",
       display: "flex", flexDirection: "column",
       alignItems: "center", justifyContent: "center",
       padding: "1.5rem 1rem", fontFamily: "'Georgia', serif",
