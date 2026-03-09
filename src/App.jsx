@@ -1,4 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+
+     
+    import { useState, useEffect, useRef } from "react";
 
 const CONSTELLATIONS = [
   {
@@ -132,15 +134,41 @@ const complexToSignature = (text) => {
 
 const pickRandom = () => CONSTELLATIONS[Math.floor(Math.random() * CONSTELLATIONS.length)];
 
+// localStorage helpers
+const loadSaved = () => {
+  try {
+    const flaws = localStorage.getItem("hc-flaws");
+    const constellation = localStorage.getItem("hc-constellation");
+    return {
+      flaws: flaws ? JSON.parse(flaws) : [],
+      constellation: constellation ? JSON.parse(constellation) : pickRandom(),
+    };
+  } catch {
+    return { flaws: [], constellation: pickRandom() };
+  }
+};
+
 export default function HiddenConstellation() {
-  const [constellation, setConstellation] = useState(() => pickRandom());
-  const [flaws, setFlaws] = useState([]);
+  const saved = loadSaved();
+  const [constellation, setConstellation] = useState(saved.constellation);
+  const [flaws, setFlaws] = useState(saved.flaws);
   const [input, setInput] = useState("");
   const [hoveredStar, setHoveredStar] = useState(null);
-  const [phase, setPhase] = useState("building");
-  const [showComplete, setShowComplete] = useState(false);
+  const [phase, setPhase] = useState(saved.flaws.length === 7 ? "complete" : "building");
+  const [showComplete, setShowComplete] = useState(saved.flaws.length === 7);
   const [newStarIdx, setNewStarIdx] = useState(null);
-  const [lineKeys, setLineKeys] = useState({});
+  const [lineKeys, setLineKeys] = useState(() => {
+    // Rebuild lineKeys from saved flaws
+    const keys = {};
+    if (saved.flaws.length > 0) {
+      saved.constellation.lines.forEach(([a, b]) => {
+        const aOn = saved.flaws.some(f => f.starIdx === a);
+        const bOn = saved.flaws.some(f => f.starIdx === b);
+        if (aOn && bOn) keys[`${a}-${b}`] = Date.now();
+      });
+    }
+    return keys;
+  });
   const inputRef = useRef(null);
 
   const total = 7;
@@ -148,6 +176,14 @@ export default function HiddenConstellation() {
   const svgW = 300;
   const svgH = 320;
   const pos = (star) => ({ x: star.x * svgW, y: star.y * svgH });
+
+  // Save to localStorage whenever flaws or constellation changes
+  useEffect(() => {
+    try {
+      localStorage.setItem("hc-flaws", JSON.stringify(flaws));
+      localStorage.setItem("hc-constellation", JSON.stringify(constellation));
+    } catch {}
+  }, [flaws, constellation]);
 
   const addFlaw = (text) => {
     if (!text.trim() || count >= total) return;
@@ -176,6 +212,11 @@ export default function HiddenConstellation() {
   };
 
   const reset = () => {
+    // Clear localStorage
+    try {
+      localStorage.removeItem("hc-flaws");
+      localStorage.removeItem("hc-constellation");
+    } catch {}
     setFlaws([]); setInput(""); setPhase("building");
     setShowComplete(false); setHoveredStar(null);
     setLineKeys({}); setNewStarIdx(null);
@@ -184,12 +225,12 @@ export default function HiddenConstellation() {
 
   return (
     <div style={{
-      minHeight: "100vh", background: "#03020b",
-      width: "100vw",
+      minHeight: "100vh", width: "100vw", background: "#03020b",
       display: "flex", flexDirection: "column",
       alignItems: "center", justifyContent: "center",
       padding: "1.5rem 1rem", fontFamily: "'Georgia', serif",
       position: "relative", overflow: "hidden",
+      boxSizing: "border-box",
     }}>
       <style>{`
         @keyframes starAppear {
@@ -218,6 +259,7 @@ export default function HiddenConstellation() {
         @keyframes completeGlow {
           0%,100%{ opacity:.2; } 50%{ opacity:.5; }
         }
+        * { box-sizing: border-box; }
         .flaw-tag:hover {
           background:rgba(100,140,220,0.28)!important;
           border-color:rgba(168,200,255,0.42)!important;
@@ -263,6 +305,17 @@ export default function HiddenConstellation() {
           </p>
         </div>
 
+        {/* Saved notice */}
+        {count > 0 && count < total && (
+          <div style={{
+            textAlign:"center", marginBottom:"0.8rem",
+            fontSize:"0.65rem", letterSpacing:"0.12em",
+            color:"rgba(140,180,220,0.4)",
+          }}>
+            ✦ your progress is saved · come back anytime
+          </div>
+        )}
+
         {/* SVG */}
         <div style={{ display:"flex", justifyContent:"center", marginBottom:"1.2rem" }}>
           <div style={{
@@ -292,8 +345,7 @@ export default function HiddenConstellation() {
                 return <line key={key}
                   x1={pa.x} y1={pa.y} x2={pb.x} y2={pb.y}
                   stroke="rgba(168,200,255,0.28)" strokeWidth="1" strokeLinecap="round"
-                  style={{strokeDasharray:len,strokeDashoffset:len,"--len":len,
-                    animation:"lineGrow 1s ease forwards"}}/>;
+                  style={{strokeDasharray:len,strokeDashoffset:0,"--len":len}}/>;
               })}
 
               {/* Complete glow */}
@@ -313,13 +365,11 @@ export default function HiddenConstellation() {
                   <g key={`s${i}`} style={{cursor:"pointer"}}
                     onMouseEnter={()=>setHoveredStar(i)}
                     onMouseLeave={()=>setHoveredStar(null)}>
-                    {/* Pulse ring */}
                     <circle cx={p.x} cy={p.y} r={r+10}
                       fill="none"
                       stroke={isHov?"rgba(168,200,255,0.38)":"rgba(168,200,255,0.1)"}
                       strokeWidth="1"
                       style={{animation:`starPulse ${2+i*0.4}s ease-in-out infinite`}}/>
-                    {/* Core */}
                     <circle cx={p.x} cy={p.y} r={r}
                       fill={isHov?"#fff":"#a8c8ff"}
                       style={{
@@ -327,14 +377,12 @@ export default function HiddenConstellation() {
                         transition:"fill 0.3s, filter 0.3s",
                         animation:isNew?"starAppear 0.8s cubic-bezier(0.34,1.56,0.64,1) forwards":"none",
                       }}/>
-                    {/* Label */}
                     <text x={p.x+r+5} y={p.y+4}
                       fill="rgba(168,200,255,0.4)" fontSize="8"
                       fontFamily="Georgia,serif"
                       style={{userSelect:"none",pointerEvents:"none"}}>
                       {star.label}
                     </text>
-                    {/* Tooltip */}
                     {isHov && (
                       <g>
                         <rect x={p.x-74} y={p.y-58} width="148" height="48" rx="5"
@@ -372,7 +420,6 @@ export default function HiddenConstellation() {
         {/* Input */}
         {phase==="building" && (
           <div style={{animation:"fadeUp 0.4s ease forwards"}}>
-            {/* Progress dots */}
             <div style={{display:"flex",justifyContent:"center",gap:"0.42rem",marginBottom:"0.9rem"}}>
               {Array.from({length:total}).map((_,i)=>(
                 <div key={i} style={{
@@ -385,7 +432,6 @@ export default function HiddenConstellation() {
               ))}
             </div>
 
-            {/* Text input */}
             <div style={{
               background:"rgba(9,7,24,0.82)",
               border:"1px solid rgba(100,140,220,0.16)",
@@ -425,7 +471,6 @@ export default function HiddenConstellation() {
               </div>
             </div>
 
-            {/* Tags */}
             <div style={{display:"flex",flexWrap:"wrap",gap:"0.36rem",justifyContent:"center"}}>
               {FLAW_TAGS.filter(t=>!flaws.some(f=>f.text===t)).slice(0,12).map(tag=>(
                 <button key={tag} className="flaw-tag" onClick={()=>addFlaw(tag)} style={{
@@ -434,49 +479,4 @@ export default function HiddenConstellation() {
                   color:"rgba(165,192,232,0.58)",
                   padding:"0.25rem 0.68rem",
                   borderRadius:"1px 7px 1px 5px",
-                  cursor:"pointer", fontFamily:"'Georgia',serif", fontSize:"0.74rem",
-                }}>{tag}</button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Flaw list */}
-        {flaws.length>0 && (
-          <div style={{marginTop:"1.1rem"}}>
-            {flaws.map((f,i)=>(
-              <div key={i} style={{
-                display:"flex",alignItems:"center",
-                gap:"0.5rem",marginBottom:"0.32rem",
-                opacity:0,animation:`fadeUp 0.45s ease ${i*0.07}s forwards`,
-              }}>
-                <div style={{width:5,height:5,borderRadius:"50%",flexShrink:0,
-                  background:"#a8c8ff",boxShadow:"0 0 5px rgba(168,200,255,0.7)"}}/>
-                <span style={{color:"rgba(192,210,248,0.58)",fontSize:"0.78rem"}}>{f.text}</span>
-                <span style={{color:"rgba(140,175,230,0.32)",fontSize:"0.7rem",fontStyle:"italic"}}>→ {f.sig}</span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Reset */}
-        {phase==="complete" && (
-          <div style={{textAlign:"center",marginTop:"1.3rem"}}>
-            <button onClick={reset} style={{
-              background:"transparent",
-              border:"1px solid rgba(168,200,255,0.2)",
-              color:"rgba(168,200,255,0.52)",
-              padding:"0.52rem 1.5rem",
-              borderRadius:"2px 12px 2px 10px",
-              cursor:"pointer", fontFamily:"'Georgia',serif",
-              fontSize:"0.8rem", letterSpacing:"0.05em", transition:"all 0.3s ease",
-            }}
-              onMouseEnter={e=>e.target.style.borderColor="rgba(168,200,255,0.48)"}
-              onMouseLeave={e=>e.target.style.borderColor="rgba(168,200,255,0.2)"}
-            >Begin again →</button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+                  cursor:"pointer", fo
