@@ -265,7 +265,7 @@ export default function HiddenConstellation() {
           border-color:rgba(168,200,255,0.42)!important;
           color:rgba(215,228,255,0.95)!important;
         }
-        input::placeholder{ color:rgba(200,225,255,0.85) !important; }
+        input::placeholder{ color:rgba(255,255,255,0.95) !important; }
         input:focus{ outline:none; }
       `}</style>
 
