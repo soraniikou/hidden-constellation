@@ -189,7 +189,6 @@ export default function HiddenConstellation() {
 
   const [epilogueStep, setEpilogueStep] = useState(0);
   const [epilogueVisible, setEpilogueVisible] = useState(false);
-  const [epilogueFinished, setEpilogueFinished] = useState(false);
   const [ambientPlaying, setAmbientPlaying] = useState(false);
 
   const total = 7;
@@ -198,10 +197,11 @@ export default function HiddenConstellation() {
   const svgH = 320;
   const pos = (star) => ({ x: star.x * svgW, y: star.y * svgH });
 
-  const lastEpilogueActive =
-    showComplete &&
-    epilogueVisible &&
-    epilogueStep === EPILOGUE_MESSAGES.length - 1;
+  const lastMessageIndex = EPILOGUE_MESSAGES.length - 1;
+  /** Pink stars from last epilogue slide onward (stays after sequence ends). */
+  const lastEpiloguePinkStars = showComplete && epilogueStep === lastMessageIndex;
+  /** Shooting star only while last line is visible (fading in/out). */
+  const lastEpilogueMeteor = lastEpiloguePinkStars && epilogueVisible;
 
   // Save to localStorage whenever flaws or constellation changes
   useEffect(() => {
@@ -213,13 +213,11 @@ export default function HiddenConstellation() {
 
   useEffect(() => {
     if (!showComplete) {
-      setEpilogueFinished(false);
       setEpilogueStep(0);
       setEpilogueVisible(false);
       return;
     }
     let cancelled = false;
-    setEpilogueFinished(false);
 
     (async () => {
       for (let i = 0; i < EPILOGUE_MESSAGES.length; i++) {
@@ -234,7 +232,6 @@ export default function HiddenConstellation() {
         setEpilogueVisible(false);
         await new Promise((r) => setTimeout(r, EPILOGUE_FADE_MS + EPILOGUE_GAP_MS));
       }
-      if (!cancelled) setEpilogueFinished(true);
     })();
 
     return () => {
@@ -336,10 +333,6 @@ export default function HiddenConstellation() {
         @keyframes completeGlow {
           0%,100%{ opacity:.2; } 50%{ opacity:.5; }
         }
-        @keyframes epilogueHintIn {
-          from { opacity: 0; transform: translateY(8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
         @keyframes shootingStarTrail {
           0% {
             transform: translate3d(18vw, -12vh, 0) rotate(-41deg);
@@ -379,7 +372,7 @@ export default function HiddenConstellation() {
         ))}
       </div>
 
-      {lastEpilogueActive && (
+      {lastEpilogueMeteor && (
         <div
           aria-hidden
           style={{
@@ -453,14 +446,14 @@ export default function HiddenConstellation() {
             <svg width={svgW} height={svgH} viewBox={`0 0 ${svgW} ${svgH}`}
               style={{ display:"block", overflow:"visible" }}>
               <defs>
-                <radialGradient id="hc-star-pink" cx="32%" cy="30%" r="72%">
-                  <stop offset="0%" stopColor="#fff9fc" />
-                  <stop offset="42%" stopColor="#ffd8ea" />
-                  <stop offset="100%" stopColor="#e8a8c8" />
+                <radialGradient id="hc-star-pink" cx="30%" cy="28%" r="75%">
+                  <stop offset="0%" stopColor="#fff2f7" />
+                  <stop offset="38%" stopColor="#ffc2df" />
+                  <stop offset="100%" stopColor="#e85a9e" />
                 </radialGradient>
                 <linearGradient id="hc-star-pink-hover" x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stopColor="#ffffff" />
-                  <stop offset="100%" stopColor="#ffc4dc" />
+                  <stop offset="100%" stopColor="#ff6eb2" />
                 </linearGradient>
               </defs>
 
@@ -481,7 +474,7 @@ export default function HiddenConstellation() {
                 const len=Math.hypot(pb.x-pa.x,pb.y-pa.y);
                 return <line key={key}
                   x1={pa.x} y1={pa.y} x2={pb.x} y2={pb.y}
-                  stroke={lastEpilogueActive ? "rgba(255, 190, 215, 0.38)" : "rgba(168,200,255,0.28)"}
+                  stroke={lastEpiloguePinkStars ? "rgba(255, 140, 178, 0.55)" : "rgba(168,200,255,0.28)"}
                   strokeWidth="1" strokeLinecap="round"
                   style={{
                     strokeDasharray: len,
@@ -495,7 +488,7 @@ export default function HiddenConstellation() {
               {phase==="complete" && (
                 <circle cx={svgW/2} cy={svgH/2} r={85}
                   fill="none"
-                  stroke={lastEpilogueActive ? "rgba(255, 170, 200, 0.09)" : "rgba(168,200,255,0.07)"}
+                  stroke={lastEpiloguePinkStars ? "rgba(255, 130, 175, 0.16)" : "rgba(168,200,255,0.07)"}
                   strokeWidth={80}
                   style={{
                     animation: "completeGlow 3s ease-in-out infinite",
@@ -510,7 +503,7 @@ export default function HiddenConstellation() {
                 const p=pos(star); const r=star.size/2;
                 const isNew=newStarIdx===i; const isHov=hoveredStar===i;
                 const pinkFill = isHov ? "url(#hc-star-pink-hover)" : "url(#hc-star-pink)";
-                const pinkGlow = isHov ? "#ffe8f0" : "#ffc8dd";
+                const pinkGlow = isHov ? "#ffb8de" : "#ff7eb8";
                 const blueFill = isHov ? "#fff" : "#a8c8ff";
                 const blueGlow = isHov ? "#fff" : "#a8c8ff";
                 return (
@@ -519,8 +512,8 @@ export default function HiddenConstellation() {
                     onMouseLeave={()=>setHoveredStar(null)}>
                     <circle cx={p.x} cy={p.y} r={r+10}
                       fill="none"
-                      stroke={lastEpilogueActive
-                        ? (isHov ? "rgba(255, 200, 220, 0.45)" : "rgba(255, 190, 210, 0.16)")
+                      stroke={lastEpiloguePinkStars
+                        ? (isHov ? "rgba(255, 140, 185, 0.55)" : "rgba(255, 120, 165, 0.28)")
                         : (isHov ? "rgba(168,200,255,0.38)" : "rgba(168,200,255,0.1)")}
                       strokeWidth="1"
                       style={{
@@ -528,14 +521,14 @@ export default function HiddenConstellation() {
                         transition: "stroke 2.2s ease",
                       }}/>
                     <circle cx={p.x} cy={p.y} r={r}
-                      fill={lastEpilogueActive ? pinkFill : blueFill}
+                      fill={lastEpiloguePinkStars ? pinkFill : blueFill}
                       style={{
-                        filter: `drop-shadow(0 0 ${isHov ? 14 : 7}px ${lastEpilogueActive ? pinkGlow : blueGlow})`,
+                        filter: `drop-shadow(0 0 ${isHov ? 16 : 10}px ${lastEpiloguePinkStars ? pinkGlow : blueGlow})`,
                         transition: "fill 2.2s ease, filter 2.2s ease",
                         animation: isNew ? "starAppear 0.8s cubic-bezier(0.34,1.56,0.64,1) forwards" : "none",
                       }}/>
                     <text x={p.x+r+5} y={p.y+4}
-                      fill={lastEpilogueActive ? "rgba(255, 210, 225, 0.52)" : "rgba(168,200,255,0.4)"}
+                      fill={lastEpiloguePinkStars ? "rgba(255, 175, 205, 0.88)" : "rgba(168,200,255,0.4)"}
                       fontSize="8"
                       fontFamily="Georgia,serif"
                       style={{userSelect:"none",pointerEvents:"none"}}>
@@ -592,17 +585,6 @@ export default function HiddenConstellation() {
             >
               {EPILOGUE_MESSAGES[epilogueStep]}
             </p>
-            {epilogueFinished && (
-              <div style={{
-                marginTop: "1.05rem",
-                fontSize: "0.7rem",
-                color: "rgba(168,200,255,0.42)",
-                letterSpacing: "0.1em",
-                animation: "epilogueHintIn 1.1s ease forwards",
-              }}>
-                Hover each star to reveal your hidden talent
-              </div>
-            )}
           </div>
         )}
 
