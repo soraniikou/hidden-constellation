@@ -195,6 +195,7 @@ export default function HiddenConstellation() {
   const [isMobileLayout, setIsMobileLayout] = useState(
     () => typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches
   );
+  const [meteorOrientDeg, setMeteorOrientDeg] = useState(() => Math.random() * 360);
 
   const total = 7;
   const count = flaws.length;
@@ -257,6 +258,12 @@ export default function HiddenConstellation() {
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
   }, []);
+
+  useEffect(() => {
+    if (lastEpilogueMeteor) {
+      setMeteorOrientDeg(Math.random() * 360);
+    }
+  }, [lastEpilogueMeteor]);
 
   const addFlaw = (text) => {
     if (!text.trim() || count >= total) return;
@@ -352,21 +359,16 @@ export default function HiddenConstellation() {
         @keyframes completeGlow {
           0%,100%{ opacity:.2; } 50%{ opacity:.5; }
         }
-        @keyframes shootingStarTrail {
-          0% {
-            transform: translate3d(18vw, -12vh, 0) rotate(-41deg);
-            opacity: 0;
-          }
-          14% { opacity: 1; }
-          72% {
-            transform: translate3d(-118vw, 108vh, 0) rotate(-41deg);
-            opacity: 0.9;
-          }
+        @keyframes constSpin19 {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes meteorSlideLocal {
+          0% { transform: translate3d(42vmin, 0, 0); opacity: 0; }
+          12% { opacity: 1; }
+          72% { transform: translate3d(-42vmin, 0, 0); opacity: 0.9; }
           88% { opacity: 0; }
-          100% {
-            transform: translate3d(-118vw, 108vh, 0) rotate(-41deg);
-            opacity: 0;
-          }
+          100% { transform: translate3d(-42vmin, 0, 0); opacity: 0; }
         }
         * { box-sizing: border-box; }
         .flaw-tag:hover {
@@ -438,23 +440,39 @@ export default function HiddenConstellation() {
             pointerEvents: "none",
             zIndex: 1,
             overflow: "hidden",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
           <div
             style={{
-              position: "absolute",
-              right: "6%",
-              top: "10%",
-              width: "min(220vmax, 3200px)",
-              height: "3px",
-              transformOrigin: "100% 50%",
-              background:
-                "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.12) 28%, rgba(255,245,250,0.95) 48%, rgba(255,185,210,0.65) 58%, transparent 78%)",
-              filter: "blur(0.45px)",
-              boxShadow: "0 0 14px 3px rgba(255, 200, 220, 0.35)",
-              animation: "shootingStarTrail 13s ease-in-out infinite",
+              transform: `rotate(${meteorOrientDeg}deg)`,
+              transformOrigin: "50% 50%",
+              width: 0,
+              height: 0,
+              position: "relative",
             }}
-          />
+          >
+            <div
+              onAnimationIteration={() => setMeteorOrientDeg(Math.random() * 360)}
+              style={{
+                position: "absolute",
+                left: 0,
+                top: 0,
+                width: "220vmax",
+                height: "3px",
+                marginLeft: "-110vmax",
+                marginTop: "-1.5px",
+                transformOrigin: "50% 50%",
+                background:
+                  "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.12) 28%, rgba(255,245,250,0.95) 48%, rgba(255,185,210,0.65) 58%, transparent 78%)",
+                filter: "blur(0.45px)",
+                boxShadow: "0 0 14px 3px rgba(255, 200, 220, 0.35)",
+                animation: "meteorSlideLocal 13s ease-in-out infinite",
+              }}
+            />
+          </div>
         </div>
       )}
 
@@ -500,6 +518,15 @@ export default function HiddenConstellation() {
             borderRadius:"14px", padding:"0.9rem",
             backdropFilter:"blur(10px)",
           }}>
+            <div
+              style={{
+                width: svgW,
+                height: svgH,
+                overflow: "visible",
+                animation: lastEpiloguePinkStars ? "constSpin19 19s linear infinite" : "none",
+                transformOrigin: "center center",
+              }}
+            >
             <svg width={svgW} height={svgH} viewBox={`0 0 ${svgW} ${svgH}`}
               style={{ display:"block", overflow:"visible" }}>
               <defs>
@@ -631,6 +658,7 @@ export default function HiddenConstellation() {
                 );
               })}
             </svg>
+            </div>
           </div>
         </div>
 
