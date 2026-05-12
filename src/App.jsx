@@ -134,6 +134,21 @@ const complexToSignature = (text) => {
 
 const pickRandom = () => CONSTELLATIONS[Math.floor(Math.random() * CONSTELLATIONS.length)];
 
+/** Drop `public/ambient.mp3` (or change path) for background audio on the complete screen */
+const AMBIENT_AUDIO_SRC = `${import.meta.env.BASE_URL}ambient.mp3`;
+
+const EPILOGUE_MESSAGES = [
+  "Your flaws became a constellation.",
+  "This constellation is a signpost. Someone is looking for you in the night sky.",
+  "Starlight takes centuries to arrive. What you shine today may not reach them in this life.",
+  "Somewhere, they are drawing their own constellation too. Two skies, quietly echoing.",
+  "So if we don't meet in this life ― in the next, I will find you. Without fail.",
+];
+
+const EPILOGUE_FADE_MS = 2800;
+const EPILOGUE_HOLD_MS = 5200;
+const EPILOGUE_GAP_MS = 450;
+
 // localStorage helpers
 const loadSaved = () => {
   try {
@@ -170,6 +185,12 @@ export default function HiddenConstellation() {
     return keys;
   });
   const inputRef = useRef(null);
+  const audioRef = useRef(null);
+
+  const [epilogueStep, setEpilogueStep] = useState(0);
+  const [epilogueVisible, setEpilogueVisible] = useState(false);
+  const [epilogueFinished, setEpilogueFinished] = useState(false);
+  const [ambientPlaying, setAmbientPlaying] = useState(false);
 
   const total = 7;
   const count = flaws.length;
@@ -184,6 +205,37 @@ export default function HiddenConstellation() {
       localStorage.setItem("hc-constellation", JSON.stringify(constellation));
     } catch {}
   }, [flaws, constellation]);
+
+  useEffect(() => {
+    if (!showComplete) {
+      setEpilogueFinished(false);
+      setEpilogueStep(0);
+      setEpilogueVisible(false);
+      return;
+    }
+    let cancelled = false;
+    setEpilogueFinished(false);
+
+    (async () => {
+      for (let i = 0; i < EPILOGUE_MESSAGES.length; i++) {
+        if (cancelled) return;
+        setEpilogueStep(i);
+        setEpilogueVisible(false);
+        await new Promise((r) => setTimeout(r, EPILOGUE_GAP_MS));
+        if (cancelled) return;
+        setEpilogueVisible(true);
+        await new Promise((r) => setTimeout(r, EPILOGUE_FADE_MS + EPILOGUE_HOLD_MS));
+        if (cancelled) return;
+        setEpilogueVisible(false);
+        await new Promise((r) => setTimeout(r, EPILOGUE_FADE_MS + EPILOGUE_GAP_MS));
+      }
+      if (!cancelled) setEpilogueFinished(true);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [showComplete]);
 
   const addFlaw = (text) => {
     if (!text.trim() || count >= total) return;
@@ -221,6 +273,26 @@ export default function HiddenConstellation() {
     setShowComplete(false); setHoveredStar(null);
     setLineKeys({}); setNewStarIdx(null);
     setConstellation(pickRandom());
+    try {
+      audioRef.current?.pause();
+    } catch {}
+    setAmbientPlaying(false);
+  };
+
+  const toggleAmbient = async () => {
+    const el = audioRef.current;
+    if (!el) return;
+    try {
+      if (el.paused) {
+        await el.play();
+        setAmbientPlaying(true);
+      } else {
+        el.pause();
+        setAmbientPlaying(false);
+      }
+    } catch {
+      setAmbientPlaying(false);
+    }
   };
 
   return (
@@ -258,6 +330,10 @@ export default function HiddenConstellation() {
         }
         @keyframes completeGlow {
           0%,100%{ opacity:.2; } 50%{ opacity:.5; }
+        }
+        @keyframes epilogueHintIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
         }
         * { box-sizing: border-box; }
         .flaw-tag:hover {
@@ -388,11 +464,11 @@ export default function HiddenConstellation() {
                         <rect x={p.x-74} y={p.y-58} width="148" height="48" rx="5"
                           fill="rgba(5,3,16,0.95)" stroke="rgba(168,200,255,0.16)" strokeWidth="1"/>
                         <text x={p.x} y={p.y-40} textAnchor="middle"
-                          fill="#c8d8ff" fontSize="10" fontFamily="Georgia,serif">
+                          fill="#e4ecff" fontSize="10" fontFamily="Georgia,serif">
                           {flaw.text}
                         </text>
                         <text x={p.x} y={p.y-24} textAnchor="middle"
-                          fill="rgba(168,200,255,0.52)" fontSize="8.5"
+                          fill="rgba(200,220,255,0.92)" fontSize="8.5"
                           fontFamily="Georgia,serif" fontStyle="italic">
                           → {flaw.sig}
                         </text>
@@ -405,16 +481,86 @@ export default function HiddenConstellation() {
           </div>
         </div>
 
-        {/* Complete message */}
+        {/* Epilogue sequence (after constellation complete) */}
         {showComplete && (
-          <div style={{textAlign:"center",marginBottom:"1rem",animation:"fadeUp 0.9s ease forwards"}}>
-            <div style={{fontSize:"clamp(1rem,3vw,1.3rem)",color:"#c8d8ff",fontStyle:"italic",lineHeight:1.7,marginBottom:"0.35rem"}}>
-              Your flaws became {constellation.name}
-            </div>
-            <div style={{fontSize:"0.7rem",color:"rgba(168,200,255,0.42)",letterSpacing:"0.1em"}}>
-              Hover each star to reveal your hidden talent
-            </div>
+          <div style={{
+            textAlign: "center",
+            marginBottom: "1rem",
+            minHeight: "clamp(7rem, 22vh, 11rem)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "0 0.25rem",
+          }}>
+            <p
+              key={epilogueStep}
+              style={{
+                fontSize: "clamp(0.92rem, 3.1vw, 1.12rem)",
+                color: "#c8d8ff",
+                fontStyle: "italic",
+                lineHeight: 1.78,
+                margin: 0,
+                maxWidth: "26rem",
+                opacity: epilogueVisible ? 1 : 0,
+                transition: `opacity ${EPILOGUE_FADE_MS}ms ease-in-out`,
+                textShadow: "0 0 28px rgba(90, 120, 200, 0.12)",
+              }}
+            >
+              {EPILOGUE_MESSAGES[epilogueStep]}
+            </p>
+            {epilogueFinished && (
+              <div style={{
+                marginTop: "1.05rem",
+                fontSize: "0.7rem",
+                color: "rgba(168,200,255,0.42)",
+                letterSpacing: "0.1em",
+                animation: "epilogueHintIn 1.1s ease forwards",
+              }}>
+                Hover each star to reveal your hidden talent
+              </div>
+            )}
           </div>
+        )}
+
+        <audio
+          ref={audioRef}
+          src={AMBIENT_AUDIO_SRC}
+          loop
+          preload="none"
+          onPlay={() => setAmbientPlaying(true)}
+          onPause={() => setAmbientPlaying(false)}
+          onEnded={() => setAmbientPlaying(false)}
+        />
+
+        {showComplete && (
+          <button
+            type="button"
+            onClick={toggleAmbient}
+            aria-pressed={ambientPlaying}
+            aria-label={ambientPlaying ? "Pause ambient background" : "Play ambient background"}
+            style={{
+              position: "fixed",
+              bottom: "1.15rem",
+              left: "50%",
+              transform: "translateX(-50%)",
+              zIndex: 3,
+              background: "rgba(8, 6, 22, 0.72)",
+              border: "1px solid rgba(120, 160, 230, 0.22)",
+              color: ambientPlaying ? "rgba(200, 220, 255, 0.88)" : "rgba(160, 190, 240, 0.55)",
+              padding: "0.45rem 1.15rem",
+              borderRadius: "2px 14px 2px 10px",
+              cursor: "pointer",
+              fontFamily: "'Georgia', serif",
+              fontSize: "0.72rem",
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              backdropFilter: "blur(8px)",
+              transition: "border-color 0.3s, color 0.3s",
+            }}
+          >
+            {ambientPlaying ? "◇ pause ambience" : "♪ play ambience"}
+          </button>
         )}
 
         {/* Input */}
@@ -441,10 +587,10 @@ export default function HiddenConstellation() {
             }}>
               <div style={{
                 fontSize:"0.57rem",letterSpacing:"0.2em",
-                color:"rgba(130,160,210,0.32)",
+                color:"rgba(190,210,248,0.78)",
                 fontFamily:"'Courier New',monospace",marginBottom:"0.5rem",
               }}>
-                ∿ star {count+1} of {total}
+                star {count+1} of {total}
               </div>
               <div style={{display:"flex",gap:"0.55rem",alignItems:"center"}}>
                 <input ref={inputRef} value={input}
@@ -453,7 +599,7 @@ export default function HiddenConstellation() {
                   placeholder="type a flaw you carry…"
                   style={{
                     flex:1, background:"transparent", border:"none",
-                    color:"rgba(215,228,255,0.9)",
+                    color:"rgba(232,240,255,0.98)",
                     fontFamily:"'Georgia',serif", fontSize:"0.93rem",
                   }}/>
                 <button onClick={()=>addFlaw(input)} disabled={!input.trim()} style={{
@@ -461,7 +607,7 @@ export default function HiddenConstellation() {
                     ?"linear-gradient(135deg,rgba(70,110,200,0.65),rgba(110,70,200,0.65))"
                     :"rgba(40,40,80,0.32)",
                   border:"none",
-                  color:input.trim()?"#c8d8ff":"rgba(130,150,200,0.28)",
+                  color:input.trim()?"#e4ecff":"rgba(160,185,230,0.45)",
                   padding:"0.44rem 0.95rem",
                   borderRadius:"2px 10px 2px 8px",
                   cursor:input.trim()?"pointer":"default",
@@ -479,4 +625,48 @@ export default function HiddenConstellation() {
                   color:"rgba(165,192,232,0.58)",
                   padding:"0.25rem 0.68rem",
                   borderRadius:"1px 7px 1px 5px",
-                  cursor:"pointer", fo
+                  cursor:"pointer", fontFamily:"'Georgia',serif", fontSize:"0.74rem",
+                }}>{tag}</button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Flaw list */}
+        {flaws.length>0 && (
+          <div style={{marginTop:"1.1rem"}}>
+            {flaws.map((f,i)=>(
+              <div key={i} style={{
+                display:"flex",alignItems:"center",
+                gap:"0.5rem",marginBottom:"0.32rem",
+              }}>
+                <div style={{width:5,height:5,borderRadius:"50%",flexShrink:0,
+                  background:"#a8c8ff",boxShadow:"0 0 5px rgba(168,200,255,0.7)"}}/>
+                <span style={{color:"rgba(210,224,255,0.88)",fontSize:"0.78rem"}}>{f.text}</span>
+                <span style={{color:"rgba(195,215,255,0.88)",fontSize:"0.7rem",fontStyle:"italic"}}>→ {f.sig}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Reset */}
+        {phase==="complete" && (
+          <div style={{textAlign:"center",marginTop:"1.3rem"}}>
+            <button onClick={reset} style={{
+              background:"transparent",
+              border:"1px solid rgba(168,200,255,0.2)",
+              color:"rgba(168,200,255,0.52)",
+              padding:"0.52rem 1.5rem",
+              borderRadius:"2px 12px 2px 10px",
+              cursor:"pointer", fontFamily:"'Georgia',serif",
+              fontSize:"0.8rem", letterSpacing:"0.05em", transition:"all 0.3s ease",
+            }}
+              onMouseEnter={e=>e.target.style.borderColor="rgba(168,200,255,0.48)"}
+              onMouseLeave={e=>e.target.style.borderColor="rgba(168,200,255,0.2)"}
+            >Begin again →</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
