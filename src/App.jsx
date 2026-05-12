@@ -190,6 +190,9 @@ export default function HiddenConstellation() {
   const [epilogueStep, setEpilogueStep] = useState(0);
   const [epilogueVisible, setEpilogueVisible] = useState(false);
   const [ambientPlaying, setAmbientPlaying] = useState(false);
+  const [isMobileLayout, setIsMobileLayout] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches
+  );
 
   const total = 7;
   const count = flaws.length;
@@ -202,6 +205,8 @@ export default function HiddenConstellation() {
   const lastEpiloguePinkStars = showComplete && epilogueStep === lastMessageIndex;
   /** Shooting star only while last line is visible (fading in/out). */
   const lastEpilogueMeteor = lastEpiloguePinkStars && epilogueVisible;
+  /** Darker last-epilogue pink on mobile only (desktop unchanged). */
+  const lastPinkMobileDark = lastEpiloguePinkStars && isMobileLayout;
 
   // Save to localStorage whenever flaws or constellation changes
   useEffect(() => {
@@ -238,6 +243,14 @@ export default function HiddenConstellation() {
       cancelled = true;
     };
   }, [showComplete]);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 640px)");
+    const onChange = () => setIsMobileLayout(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
 
   const addFlaw = (text) => {
     if (!text.trim() || count >= total) return;
@@ -357,6 +370,44 @@ export default function HiddenConstellation() {
         }
         input::placeholder{ color:rgba(255,255,255,0.95) !important; }
         input:focus{ outline:none; }
+        .ambient-btn {
+          position: fixed;
+          bottom: 1.15rem;
+          right: 1.15rem;
+          z-index: 3;
+          background: rgba(8, 6, 22, 0.72);
+          border: 1px solid rgba(120, 160, 230, 0.22);
+          color: rgba(160, 190, 240, 0.55);
+          padding: 0.45rem 1.15rem;
+          border-radius: 2px 14px 2px 10px;
+          cursor: pointer;
+          font-family: 'Georgia', serif;
+          font-size: 0.72rem;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          backdrop-filter: blur(8px);
+          transition: border-color 0.3s, color 0.3s;
+        }
+        .ambient-btn--playing {
+          color: rgba(200, 220, 255, 0.88);
+        }
+        @media (min-width: 641px) {
+          .ambient-btn {
+            border-color: rgba(138, 178, 242, 0.32);
+            color: rgba(182, 210, 252, 0.72);
+          }
+          .ambient-btn--playing {
+            color: rgba(224, 238, 255, 0.95);
+          }
+        }
+        @media (max-width: 640px) {
+          .ambient-btn {
+            bottom: max(0.45rem, env(safe-area-inset-bottom, 0px));
+            right: max(0.4rem, env(safe-area-inset-right, 0px));
+            transform: scale(0.7);
+            transform-origin: right bottom;
+          }
+        }
       `}</style>
 
       {/* Star field */}
@@ -455,6 +506,15 @@ export default function HiddenConstellation() {
                   <stop offset="0%" stopColor="#ffffff" />
                   <stop offset="100%" stopColor="#ff6eb2" />
                 </linearGradient>
+                <radialGradient id="hc-star-pink-m" cx="30%" cy="28%" r="75%">
+                  <stop offset="0%" stopColor="#d8b8c8" />
+                  <stop offset="40%" stopColor="#b06088" />
+                  <stop offset="100%" stopColor="#6e2048" />
+                </radialGradient>
+                <linearGradient id="hc-star-pink-hover-m" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#e0c0d4" />
+                  <stop offset="100%" stopColor="#a03068" />
+                </linearGradient>
               </defs>
 
               {/* Ghost positions */}
@@ -474,7 +534,9 @@ export default function HiddenConstellation() {
                 const len=Math.hypot(pb.x-pa.x,pb.y-pa.y);
                 return <line key={key}
                   x1={pa.x} y1={pa.y} x2={pb.x} y2={pb.y}
-                  stroke={lastEpiloguePinkStars ? "rgba(255, 140, 178, 0.55)" : "rgba(168,200,255,0.28)"}
+                  stroke={lastEpiloguePinkStars
+                    ? (lastPinkMobileDark ? "rgba(175, 75, 110, 0.5)" : "rgba(255, 140, 178, 0.55)")
+                    : "rgba(168,200,255,0.28)"}
                   strokeWidth="1" strokeLinecap="round"
                   style={{
                     strokeDasharray: len,
@@ -488,7 +550,9 @@ export default function HiddenConstellation() {
               {phase==="complete" && (
                 <circle cx={svgW/2} cy={svgH/2} r={85}
                   fill="none"
-                  stroke={lastEpiloguePinkStars ? "rgba(255, 130, 175, 0.16)" : "rgba(168,200,255,0.07)"}
+                  stroke={lastEpiloguePinkStars
+                    ? (lastPinkMobileDark ? "rgba(150, 60, 90, 0.14)" : "rgba(255, 130, 175, 0.16)")
+                    : "rgba(168,200,255,0.07)"}
                   strokeWidth={80}
                   style={{
                     animation: "completeGlow 3s ease-in-out infinite",
@@ -502,8 +566,12 @@ export default function HiddenConstellation() {
                 if(!flaw) return null;
                 const p=pos(star); const r=star.size/2;
                 const isNew=newStarIdx===i; const isHov=hoveredStar===i;
-                const pinkFill = isHov ? "url(#hc-star-pink-hover)" : "url(#hc-star-pink)";
-                const pinkGlow = isHov ? "#ffb8de" : "#ff7eb8";
+                const pinkFill = isHov
+                  ? `url(#${lastPinkMobileDark ? "hc-star-pink-hover-m" : "hc-star-pink-hover"})`
+                  : `url(#${lastPinkMobileDark ? "hc-star-pink-m" : "hc-star-pink"})`;
+                const pinkGlow = lastPinkMobileDark
+                  ? (isHov ? "#9a5a78" : "#7a4060")
+                  : (isHov ? "#ffb8de" : "#ff7eb8");
                 const blueFill = isHov ? "#fff" : "#a8c8ff";
                 const blueGlow = isHov ? "#fff" : "#a8c8ff";
                 return (
@@ -513,7 +581,9 @@ export default function HiddenConstellation() {
                     <circle cx={p.x} cy={p.y} r={r+10}
                       fill="none"
                       stroke={lastEpiloguePinkStars
-                        ? (isHov ? "rgba(255, 140, 185, 0.55)" : "rgba(255, 120, 165, 0.28)")
+                        ? lastPinkMobileDark
+                          ? (isHov ? "rgba(175, 72, 105, 0.52)" : "rgba(155, 62, 92, 0.26)")
+                          : (isHov ? "rgba(255, 140, 185, 0.55)" : "rgba(255, 120, 165, 0.28)")
                         : (isHov ? "rgba(168,200,255,0.38)" : "rgba(168,200,255,0.1)")}
                       strokeWidth="1"
                       style={{
@@ -528,7 +598,9 @@ export default function HiddenConstellation() {
                         animation: isNew ? "starAppear 0.8s cubic-bezier(0.34,1.56,0.64,1) forwards" : "none",
                       }}/>
                     <text x={p.x+r+5} y={p.y+4}
-                      fill={lastEpiloguePinkStars ? "rgba(255, 175, 205, 0.88)" : "rgba(168,200,255,0.4)"}
+                      fill={lastEpiloguePinkStars
+                        ? (lastPinkMobileDark ? "rgba(195, 125, 150, 0.82)" : "rgba(255, 175, 205, 0.88)")
+                        : "rgba(168,200,255,0.4)"}
                       fontSize="8"
                       fontFamily="Georgia,serif"
                       style={{userSelect:"none",pointerEvents:"none"}}>
@@ -601,27 +673,10 @@ export default function HiddenConstellation() {
         {showComplete && (
           <button
             type="button"
+            className={`ambient-btn${ambientPlaying ? " ambient-btn--playing" : ""}`}
             onClick={toggleAmbient}
             aria-pressed={ambientPlaying}
             aria-label={ambientPlaying ? "Pause ambient background" : "Play ambient background"}
-            style={{
-              position: "fixed",
-              bottom: "1.15rem",
-              right: "1.15rem",
-              zIndex: 3,
-              background: "rgba(8, 6, 22, 0.72)",
-              border: "1px solid rgba(120, 160, 230, 0.22)",
-              color: ambientPlaying ? "rgba(200, 220, 255, 0.88)" : "rgba(160, 190, 240, 0.55)",
-              padding: "0.45rem 1.15rem",
-              borderRadius: "2px 14px 2px 10px",
-              cursor: "pointer",
-              fontFamily: "'Georgia', serif",
-              fontSize: "0.72rem",
-              letterSpacing: "0.14em",
-              textTransform: "uppercase",
-              backdropFilter: "blur(8px)",
-              transition: "border-color 0.3s, color 0.3s",
-            }}
           >
             {ambientPlaying ? "◇ pause ambience" : "♪ play ambience"}
           </button>
