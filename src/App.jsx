@@ -225,6 +225,7 @@ export default function HiddenConstellation() {
     let cancelled = false;
 
     (async () => {
+      const lastIdx = EPILOGUE_MESSAGES.length - 1;
       for (let i = 0; i < EPILOGUE_MESSAGES.length; i++) {
         if (cancelled) return;
         setEpilogueStep(i);
@@ -234,6 +235,9 @@ export default function HiddenConstellation() {
         setEpilogueVisible(true);
         await new Promise((r) => setTimeout(r, EPILOGUE_FADE_MS + EPILOGUE_HOLD_MS));
         if (cancelled) return;
+        if (i === lastIdx) {
+          return;
+        }
         setEpilogueVisible(false);
         await new Promise((r) => setTimeout(r, EPILOGUE_FADE_MS + EPILOGUE_GAP_MS));
       }
