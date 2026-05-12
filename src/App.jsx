@@ -149,15 +149,17 @@ const EPILOGUE_FADE_MS = 2800;
 const EPILOGUE_HOLD_MS = 5200;
 const EPILOGUE_GAP_MS = 450;
 
-// localStorage helpers
+// localStorage helpers — do not resume a finished run (7 stars): always start the picking flow.
 const loadSaved = () => {
   try {
-    const flaws = localStorage.getItem("hc-flaws");
-    const constellation = localStorage.getItem("hc-constellation");
-    return {
-      flaws: flaws ? JSON.parse(flaws) : [],
-      constellation: constellation ? JSON.parse(constellation) : pickRandom(),
-    };
+    const flawsRaw = localStorage.getItem("hc-flaws");
+    const constellationRaw = localStorage.getItem("hc-constellation");
+    let flaws = flawsRaw ? JSON.parse(flawsRaw) : [];
+    const constellation = constellationRaw ? JSON.parse(constellationRaw) : pickRandom();
+    if (Array.isArray(flaws) && flaws.length >= 7) {
+      flaws = [];
+    }
+    return { flaws, constellation };
   } catch {
     return { flaws: [], constellation: pickRandom() };
   }
