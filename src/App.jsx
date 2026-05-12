@@ -198,6 +198,11 @@ export default function HiddenConstellation() {
   const svgH = 320;
   const pos = (star) => ({ x: star.x * svgW, y: star.y * svgH });
 
+  const lastEpilogueActive =
+    showComplete &&
+    epilogueVisible &&
+    epilogueStep === EPILOGUE_MESSAGES.length - 1;
+
   // Save to localStorage whenever flaws or constellation changes
   useEffect(() => {
     try {
@@ -335,6 +340,22 @@ export default function HiddenConstellation() {
           from { opacity: 0; transform: translateY(8px); }
           to { opacity: 1; transform: translateY(0); }
         }
+        @keyframes shootingStarTrail {
+          0% {
+            transform: translate3d(18vw, -12vh, 0) rotate(-41deg);
+            opacity: 0;
+          }
+          14% { opacity: 1; }
+          72% {
+            transform: translate3d(-118vw, 108vh, 0) rotate(-41deg);
+            opacity: 0.9;
+          }
+          88% { opacity: 0; }
+          100% {
+            transform: translate3d(-118vw, 108vh, 0) rotate(-41deg);
+            opacity: 0;
+          }
+        }
         * { box-sizing: border-box; }
         .flaw-tag:hover {
           background:rgba(100,140,220,0.28)!important;
@@ -357,6 +378,35 @@ export default function HiddenConstellation() {
           }}/>
         ))}
       </div>
+
+      {lastEpilogueActive && (
+        <div
+          aria-hidden
+          style={{
+            position: "fixed",
+            inset: 0,
+            pointerEvents: "none",
+            zIndex: 1,
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              right: "6%",
+              top: "10%",
+              width: "min(220vmax, 3200px)",
+              height: "3px",
+              transformOrigin: "100% 50%",
+              background:
+                "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.12) 28%, rgba(255,245,250,0.95) 48%, rgba(255,185,210,0.65) 58%, transparent 78%)",
+              filter: "blur(0.45px)",
+              boxShadow: "0 0 14px 3px rgba(255, 200, 220, 0.35)",
+              animation: "shootingStarTrail 13s ease-in-out infinite",
+            }}
+          />
+        </div>
+      )}
 
       <div style={{ position:"relative", zIndex:2, width:"100%", maxWidth:"440px" }}>
 
@@ -402,6 +452,17 @@ export default function HiddenConstellation() {
           }}>
             <svg width={svgW} height={svgH} viewBox={`0 0 ${svgW} ${svgH}`}
               style={{ display:"block", overflow:"visible" }}>
+              <defs>
+                <radialGradient id="hc-star-pink" cx="32%" cy="30%" r="72%">
+                  <stop offset="0%" stopColor="#fff9fc" />
+                  <stop offset="42%" stopColor="#ffd8ea" />
+                  <stop offset="100%" stopColor="#e8a8c8" />
+                </radialGradient>
+                <linearGradient id="hc-star-pink-hover" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#ffffff" />
+                  <stop offset="100%" stopColor="#ffc4dc" />
+                </linearGradient>
+              </defs>
 
               {/* Ghost positions */}
               {constellation.stars.map((star,i)=>{
@@ -420,15 +481,26 @@ export default function HiddenConstellation() {
                 const len=Math.hypot(pb.x-pa.x,pb.y-pa.y);
                 return <line key={key}
                   x1={pa.x} y1={pa.y} x2={pb.x} y2={pb.y}
-                  stroke="rgba(168,200,255,0.28)" strokeWidth="1" strokeLinecap="round"
-                  style={{strokeDasharray:len,strokeDashoffset:0,"--len":len}}/>;
+                  stroke={lastEpilogueActive ? "rgba(255, 190, 215, 0.38)" : "rgba(168,200,255,0.28)"}
+                  strokeWidth="1" strokeLinecap="round"
+                  style={{
+                    strokeDasharray: len,
+                    strokeDashoffset: 0,
+                    "--len": len,
+                    transition: "stroke 2.2s ease",
+                  }}/>;
               })}
 
               {/* Complete glow */}
               {phase==="complete" && (
                 <circle cx={svgW/2} cy={svgH/2} r={85}
-                  fill="none" stroke="rgba(168,200,255,0.07)" strokeWidth={80}
-                  style={{animation:"completeGlow 3s ease-in-out infinite"}}/>
+                  fill="none"
+                  stroke={lastEpilogueActive ? "rgba(255, 170, 200, 0.09)" : "rgba(168,200,255,0.07)"}
+                  strokeWidth={80}
+                  style={{
+                    animation: "completeGlow 3s ease-in-out infinite",
+                    transition: "stroke 2.2s ease",
+                  }}/>
               )}
 
               {/* Active stars */}
@@ -437,24 +509,34 @@ export default function HiddenConstellation() {
                 if(!flaw) return null;
                 const p=pos(star); const r=star.size/2;
                 const isNew=newStarIdx===i; const isHov=hoveredStar===i;
+                const pinkFill = isHov ? "url(#hc-star-pink-hover)" : "url(#hc-star-pink)";
+                const pinkGlow = isHov ? "#ffe8f0" : "#ffc8dd";
+                const blueFill = isHov ? "#fff" : "#a8c8ff";
+                const blueGlow = isHov ? "#fff" : "#a8c8ff";
                 return (
                   <g key={`s${i}`} style={{cursor:"pointer"}}
                     onMouseEnter={()=>setHoveredStar(i)}
                     onMouseLeave={()=>setHoveredStar(null)}>
                     <circle cx={p.x} cy={p.y} r={r+10}
                       fill="none"
-                      stroke={isHov?"rgba(168,200,255,0.38)":"rgba(168,200,255,0.1)"}
+                      stroke={lastEpilogueActive
+                        ? (isHov ? "rgba(255, 200, 220, 0.45)" : "rgba(255, 190, 210, 0.16)")
+                        : (isHov ? "rgba(168,200,255,0.38)" : "rgba(168,200,255,0.1)")}
                       strokeWidth="1"
-                      style={{animation:`starPulse ${2+i*0.4}s ease-in-out infinite`}}/>
-                    <circle cx={p.x} cy={p.y} r={r}
-                      fill={isHov?"#fff":"#a8c8ff"}
                       style={{
-                        filter:`drop-shadow(0 0 ${isHov?14:7}px ${isHov?"#fff":"#a8c8ff"})`,
-                        transition:"fill 0.3s, filter 0.3s",
-                        animation:isNew?"starAppear 0.8s cubic-bezier(0.34,1.56,0.64,1) forwards":"none",
+                        animation: `starPulse ${2+i*0.4}s ease-in-out infinite`,
+                        transition: "stroke 2.2s ease",
+                      }}/>
+                    <circle cx={p.x} cy={p.y} r={r}
+                      fill={lastEpilogueActive ? pinkFill : blueFill}
+                      style={{
+                        filter: `drop-shadow(0 0 ${isHov ? 14 : 7}px ${lastEpilogueActive ? pinkGlow : blueGlow})`,
+                        transition: "fill 2.2s ease, filter 2.2s ease",
+                        animation: isNew ? "starAppear 0.8s cubic-bezier(0.34,1.56,0.64,1) forwards" : "none",
                       }}/>
                     <text x={p.x+r+5} y={p.y+4}
-                      fill="rgba(168,200,255,0.4)" fontSize="8"
+                      fill={lastEpilogueActive ? "rgba(255, 210, 225, 0.52)" : "rgba(168,200,255,0.4)"}
+                      fontSize="8"
                       fontFamily="Georgia,serif"
                       style={{userSelect:"none",pointerEvents:"none"}}>
                       {star.label}
@@ -502,6 +584,7 @@ export default function HiddenConstellation() {
                 lineHeight: 1.78,
                 margin: 0,
                 maxWidth: "26rem",
+                overflowWrap: "break-word",
                 opacity: epilogueVisible ? 1 : 0,
                 transition: `opacity ${EPILOGUE_FADE_MS}ms ease-in-out`,
                 textShadow: "0 0 28px rgba(90, 120, 200, 0.12)",
@@ -542,8 +625,7 @@ export default function HiddenConstellation() {
             style={{
               position: "fixed",
               bottom: "1.15rem",
-              left: "50%",
-              transform: "translateX(-50%)",
+              right: "1.15rem",
               zIndex: 3,
               background: "rgba(8, 6, 22, 0.72)",
               border: "1px solid rgba(120, 160, 230, 0.22)",
