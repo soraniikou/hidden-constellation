@@ -365,8 +365,8 @@ export default function HiddenConstellation() {
         }
         @keyframes meteorSlideLocal {
           0% { transform: translate3d(42vmin, 0, 0); opacity: 0; }
-          12% { opacity: 1; }
-          72% { transform: translate3d(-42vmin, 0, 0); opacity: 0.9; }
+          12% { opacity: 0.75; }
+          72% { transform: translate3d(-42vmin, 0, 0); opacity: 0.65; }
           88% { opacity: 0; }
           100% { transform: translate3d(-42vmin, 0, 0); opacity: 0; }
         }
@@ -461,17 +461,44 @@ export default function HiddenConstellation() {
                 left: 0,
                 top: 0,
                 width: "220vmax",
-                height: "3px",
+                height: "28px",
                 marginLeft: "-110vmax",
-                marginTop: "-1.5px",
+                marginTop: "-14px",
                 transformOrigin: "50% 50%",
-                background:
-                  "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.12) 28%, rgba(255,245,250,0.95) 48%, rgba(255,185,210,0.65) 58%, transparent 78%)",
-                filter: "blur(0.45px)",
-                boxShadow: "0 0 14px 3px rgba(255, 200, 220, 0.35)",
+                filter: "blur(2.4px)",
                 animation: "meteorSlideLocal 13s ease-in-out infinite",
               }}
-            />
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  left: "6px",
+                  top: "50%",
+                  width: "12px",
+                  height: "12px",
+                  marginTop: "-6px",
+                  borderRadius: "50%",
+                  background: "radial-gradient(circle at 32% 28%, #fffefb 0%, #ffe8f4 45%, #e8b8d0 100%)",
+                  boxShadow:
+                    "0 0 10px 4px rgba(255, 220, 235, 0.55), 0 0 22px 12px rgba(255, 190, 215, 0.25), inset 0 0 6px rgba(255, 255, 255, 0.65)",
+                }}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  left: "16px",
+                  right: "0",
+                  top: "50%",
+                  height: "4px",
+                  marginTop: "-2px",
+                  borderRadius: "999px",
+                  background:
+                    "linear-gradient(90deg, rgba(255, 232, 244, 0.42) 0%, rgba(255, 200, 218, 0.18) 18%, rgba(255, 185, 205, 0.08) 42%, transparent 88%)",
+                  boxShadow:
+                    "0 0 18px 8px rgba(255, 200, 220, 0.18), inset 0 0 12px rgba(255, 255, 255, 0.12)",
+                }}
+              />
+            </div>
           </div>
         </div>
       )}
@@ -523,7 +550,7 @@ export default function HiddenConstellation() {
                 width: svgW,
                 height: svgH,
                 overflow: "visible",
-                animation: lastEpiloguePinkStars ? "constSpin19 19s linear infinite" : "none",
+                animation: lastEpiloguePinkStars ? "constSpin19 38s linear infinite" : "none",
                 transformOrigin: "center center",
               }}
             >
@@ -785,8 +812,8 @@ export default function HiddenConstellation() {
           </div>
         )}
 
-        {/* Flaw list */}
-        {flaws.length>0 && (
+        {/* Flaw list (hidden on final complete screen — main epilogue only) */}
+        {flaws.length > 0 && !showComplete && (
           <div style={{marginTop:"1.1rem"}}>
             {flaws.map((f,i)=>(
               <div key={i} style={{
