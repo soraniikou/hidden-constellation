@@ -465,13 +465,13 @@ export default function HiddenConstellation() {
                 marginLeft: "-19vmin",
                 marginTop: "-13px",
                 transformOrigin: "50% 50%",
-                animation: "meteorFlow10 10s linear infinite",
+                animation: "meteorFlow10 calc(10s / 1.3) linear infinite",
               }}
             >
               <div
                 style={{
                   position: "absolute",
-                  left: "14px",
+                  left: "10px",
                   right: "0",
                   top: "50%",
                   height: "5px",
@@ -489,9 +489,9 @@ export default function HiddenConstellation() {
                   position: "absolute",
                   left: "0",
                   top: "50%",
-                  width: "15px",
-                  height: "15px",
-                  marginTop: "-7.5px",
+                  width: "10.5px",
+                  height: "10.5px",
+                  marginTop: "-5.25px",
                   borderRadius: "50%",
                   zIndex: 2,
                   background: "radial-gradient(circle at 30% 26%, #ffffff 0%, #fff5fb 35%, #ffd8ec 72%, #f0b8d8 100%)",
