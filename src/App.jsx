@@ -363,12 +363,12 @@ export default function HiddenConstellation() {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
-        @keyframes meteorSlideLocal {
-          0% { transform: translate3d(42vmin, 0, 0); opacity: 0; }
-          12% { opacity: 0.92; }
-          72% { transform: translate3d(-42vmin, 0, 0); opacity: 0.82; }
-          88% { opacity: 0; }
-          100% { transform: translate3d(-42vmin, 0, 0); opacity: 0; }
+        @keyframes meteorFlow10 {
+          0% { transform: translate3d(46vmin, 0, 0); opacity: 0; }
+          6% { opacity: 1; }
+          58% { transform: translate3d(-16vmin, 0, 0); opacity: 1; }
+          82% { transform: translate3d(-44vmin, 0, 0); opacity: 0.38; }
+          100% { transform: translate3d(-54vmin, 0, 0); opacity: 0; }
         }
         * { box-sizing: border-box; }
         .flaw-tag:hover {
@@ -460,18 +460,18 @@ export default function HiddenConstellation() {
                 position: "absolute",
                 left: 0,
                 top: 0,
-                width: "220vmax",
-                height: "28px",
-                marginLeft: "-110vmax",
-                marginTop: "-14px",
+                width: "38vmin",
+                height: "26px",
+                marginLeft: "-19vmin",
+                marginTop: "-13px",
                 transformOrigin: "50% 50%",
-                animation: "meteorSlideLocal 13s ease-in-out infinite",
+                animation: "meteorFlow10 10s linear infinite",
               }}
             >
               <div
                 style={{
                   position: "absolute",
-                  left: "18px",
+                  left: "14px",
                   right: "0",
                   top: "50%",
                   height: "5px",
@@ -479,7 +479,7 @@ export default function HiddenConstellation() {
                   borderRadius: "999px",
                   filter: "blur(1.65px)",
                   background:
-                    "linear-gradient(90deg, rgba(255, 238, 248, 0.62) 0%, rgba(255, 210, 228, 0.38) 14%, rgba(255, 195, 215, 0.2) 38%, rgba(255, 185, 205, 0.1) 62%, transparent 92%)",
+                    "linear-gradient(90deg, rgba(255, 238, 248, 0.62) 0%, rgba(255, 210, 228, 0.38) 10%, rgba(255, 195, 215, 0.22) 28%, rgba(255, 185, 205, 0.1) 52%, rgba(255, 185, 205, 0.03) 78%, transparent 100%)",
                   boxShadow:
                     "0 0 22px 10px rgba(255, 205, 225, 0.28), 0 0 40px 18px rgba(255, 185, 210, 0.12), inset 0 0 14px rgba(255, 255, 255, 0.18)",
                 }}
@@ -487,7 +487,7 @@ export default function HiddenConstellation() {
               <div
                 style={{
                   position: "absolute",
-                  left: "2px",
+                  left: "0",
                   top: "50%",
                   width: "15px",
                   height: "15px",
