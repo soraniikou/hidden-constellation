@@ -365,8 +365,8 @@ export default function HiddenConstellation() {
         }
         @keyframes meteorSlideLocal {
           0% { transform: translate3d(42vmin, 0, 0); opacity: 0; }
-          12% { opacity: 0.75; }
-          72% { transform: translate3d(-42vmin, 0, 0); opacity: 0.65; }
+          12% { opacity: 0.92; }
+          72% { transform: translate3d(-42vmin, 0, 0); opacity: 0.82; }
           88% { opacity: 0; }
           100% { transform: translate3d(-42vmin, 0, 0); opacity: 0; }
         }
@@ -465,37 +465,38 @@ export default function HiddenConstellation() {
                 marginLeft: "-110vmax",
                 marginTop: "-14px",
                 transformOrigin: "50% 50%",
-                filter: "blur(2.4px)",
                 animation: "meteorSlideLocal 13s ease-in-out infinite",
               }}
             >
               <div
                 style={{
                   position: "absolute",
-                  left: "6px",
+                  left: "18px",
+                  right: "0",
                   top: "50%",
-                  width: "12px",
-                  height: "12px",
-                  marginTop: "-6px",
-                  borderRadius: "50%",
-                  background: "radial-gradient(circle at 32% 28%, #fffefb 0%, #ffe8f4 45%, #e8b8d0 100%)",
+                  height: "5px",
+                  marginTop: "-2.5px",
+                  borderRadius: "999px",
+                  filter: "blur(1.65px)",
+                  background:
+                    "linear-gradient(90deg, rgba(255, 238, 248, 0.62) 0%, rgba(255, 210, 228, 0.38) 14%, rgba(255, 195, 215, 0.2) 38%, rgba(255, 185, 205, 0.1) 62%, transparent 92%)",
                   boxShadow:
-                    "0 0 10px 4px rgba(255, 220, 235, 0.55), 0 0 22px 12px rgba(255, 190, 215, 0.25), inset 0 0 6px rgba(255, 255, 255, 0.65)",
+                    "0 0 22px 10px rgba(255, 205, 225, 0.28), 0 0 40px 18px rgba(255, 185, 210, 0.12), inset 0 0 14px rgba(255, 255, 255, 0.18)",
                 }}
               />
               <div
                 style={{
                   position: "absolute",
-                  left: "16px",
-                  right: "0",
+                  left: "2px",
                   top: "50%",
-                  height: "4px",
-                  marginTop: "-2px",
-                  borderRadius: "999px",
-                  background:
-                    "linear-gradient(90deg, rgba(255, 232, 244, 0.42) 0%, rgba(255, 200, 218, 0.18) 18%, rgba(255, 185, 205, 0.08) 42%, transparent 88%)",
+                  width: "15px",
+                  height: "15px",
+                  marginTop: "-7.5px",
+                  borderRadius: "50%",
+                  zIndex: 2,
+                  background: "radial-gradient(circle at 30% 26%, #ffffff 0%, #fff5fb 35%, #ffd8ec 72%, #f0b8d8 100%)",
                   boxShadow:
-                    "0 0 18px 8px rgba(255, 200, 220, 0.18), inset 0 0 12px rgba(255, 255, 255, 0.12)",
+                    "0 0 8px 3px rgba(255, 245, 252, 0.95), 0 0 18px 8px rgba(255, 215, 235, 0.55), 0 0 32px 14px rgba(255, 190, 215, 0.35), inset 0 0 8px rgba(255, 255, 255, 0.9)",
                 }}
               />
             </div>
