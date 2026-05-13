@@ -153,6 +153,13 @@ const EPILOGUE_EXTRA_FIRST_FOUR_MS = 2000;
 /** Final epilogue constellation spin (one turn); step 0 uses half this angular speed (double period). */
 const EPILOGUE_SPIN_FINAL_SEC = 38;
 const EPILOGUE_SPIN_START_SEC = EPILOGUE_SPIN_FINAL_SEC * 2;
+/** Epilogue spin speed changes: ease-in-out angular velocity over this duration (ms). */
+const EPILOGUE_SPIN_BLEND_MS = 1500;
+
+function easeInOutCubic(t) {
+  const x = Math.min(1, Math.max(0, t));
+  return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+}
 
 // localStorage helpers — do not resume a finished run (7 stars): always start the picking flow.
 const loadSaved = () => {
@@ -224,17 +231,26 @@ export default function HiddenConstellation() {
 
   const spinWrapRef = useRef(null);
   const spinAngleRef = useRef(0);
-  const spinVelRef = useRef(0);
   const spinEpilogueActiveRef = useRef(false);
   const spinRafRef = useRef(0);
   const epilogueSpinDurationSecRef = useRef(epilogueSpinDurationSec);
   epilogueSpinDurationSecRef.current = epilogueSpinDurationSec;
 
+  /** Duration (sec) used for the current omega ease segment; when ref changes, restart blend. */
+  const spinAppliedDurationSecRef = useRef(null);
+  /** Omega at start of current blend segment. */
+  const spinOmegaBlendFromRef = useRef(0);
+  /** performance.now() when current blend started. */
+  const spinOmegaBlendT0Ref = useRef(0);
+  /** Last frame's commanded angular velocity (rad/s), for chaining blends. */
+  const spinLastOmegaCmdRef = useRef(0);
+
   useEffect(() => {
     if (!showComplete) {
       spinEpilogueActiveRef.current = false;
       spinAngleRef.current = 0;
-      spinVelRef.current = 0;
+      spinLastOmegaCmdRef.current = 0;
+      spinAppliedDurationSecRef.current = null;
       cancelAnimationFrame(spinRafRef.current);
       spinRafRef.current = 0;
       const el = spinWrapRef.current;
@@ -243,9 +259,14 @@ export default function HiddenConstellation() {
     }
 
     const TWO_PI = 2 * Math.PI;
-    const initialTarget = TWO_PI / epilogueSpinDurationSecRef.current;
+
     if (!spinEpilogueActiveRef.current) {
-      spinVelRef.current = initialTarget;
+      const dur0 = epilogueSpinDurationSecRef.current;
+      const o0 = TWO_PI / dur0;
+      spinOmegaBlendFromRef.current = o0;
+      spinLastOmegaCmdRef.current = o0;
+      spinAppliedDurationSecRef.current = dur0;
+      spinOmegaBlendT0Ref.current = performance.now() - (EPILOGUE_SPIN_BLEND_MS + 1);
       spinEpilogueActiveRef.current = true;
     }
 
@@ -255,12 +276,21 @@ export default function HiddenConstellation() {
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
 
-      const targetOmega = TWO_PI / epilogueSpinDurationSecRef.current;
-      const tau = 1.15;
-      const blend = 1 - Math.exp(-dt / tau);
-      spinVelRef.current += (targetOmega - spinVelRef.current) * blend;
+      const dur = epilogueSpinDurationSecRef.current;
+      if (dur !== spinAppliedDurationSecRef.current) {
+        spinOmegaBlendFromRef.current = spinLastOmegaCmdRef.current;
+        spinAppliedDurationSecRef.current = dur;
+        spinOmegaBlendT0Ref.current = now;
+      }
 
-      spinAngleRef.current += spinVelRef.current * dt;
+      const omegaTarget = TWO_PI / dur;
+      const blendU = Math.min(1, (now - spinOmegaBlendT0Ref.current) / EPILOGUE_SPIN_BLEND_MS);
+      const te = easeInOutCubic(blendU);
+      const omegaCmd =
+        spinOmegaBlendFromRef.current + (omegaTarget - spinOmegaBlendFromRef.current) * te;
+
+      spinLastOmegaCmdRef.current = omegaCmd;
+      spinAngleRef.current += omegaCmd * dt;
       while (spinAngleRef.current > TWO_PI * 16) spinAngleRef.current -= TWO_PI * 16;
 
       const el = spinWrapRef.current;
