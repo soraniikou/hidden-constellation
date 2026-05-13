@@ -222,6 +222,62 @@ export default function HiddenConstellation() {
       (EPILOGUE_SPIN_FINAL_SEC * epilogueStep) / epilogueSpinLastIdx
     : EPILOGUE_SPIN_FINAL_SEC;
 
+  const spinWrapRef = useRef(null);
+  const spinAngleRef = useRef(0);
+  const spinVelRef = useRef(0);
+  const spinEpilogueActiveRef = useRef(false);
+  const spinRafRef = useRef(0);
+  const epilogueSpinDurationSecRef = useRef(epilogueSpinDurationSec);
+  epilogueSpinDurationSecRef.current = epilogueSpinDurationSec;
+
+  useEffect(() => {
+    if (!showComplete) {
+      spinEpilogueActiveRef.current = false;
+      spinAngleRef.current = 0;
+      spinVelRef.current = 0;
+      cancelAnimationFrame(spinRafRef.current);
+      spinRafRef.current = 0;
+      const el = spinWrapRef.current;
+      if (el) el.style.transform = "rotate(0deg)";
+      return;
+    }
+
+    const TWO_PI = 2 * Math.PI;
+    const initialTarget = TWO_PI / epilogueSpinDurationSecRef.current;
+    if (!spinEpilogueActiveRef.current) {
+      spinVelRef.current = initialTarget;
+      spinEpilogueActiveRef.current = true;
+    }
+
+    let last = performance.now();
+
+    const tick = (now) => {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+
+      const targetOmega = TWO_PI / epilogueSpinDurationSecRef.current;
+      const tau = 1.15;
+      const blend = 1 - Math.exp(-dt / tau);
+      spinVelRef.current += (targetOmega - spinVelRef.current) * blend;
+
+      spinAngleRef.current += spinVelRef.current * dt;
+      while (spinAngleRef.current > TWO_PI * 16) spinAngleRef.current -= TWO_PI * 16;
+
+      const el = spinWrapRef.current;
+      if (el) {
+        el.style.transform = `rotate(${(spinAngleRef.current * 180) / Math.PI}deg)`;
+      }
+
+      spinRafRef.current = requestAnimationFrame(tick);
+    };
+
+    spinRafRef.current = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(spinRafRef.current);
+      spinRafRef.current = 0;
+    };
+  }, [showComplete]);
+
   // Save to localStorage whenever flaws or constellation changes
   useEffect(() => {
     try {
@@ -374,10 +430,6 @@ export default function HiddenConstellation() {
         }
         @keyframes completeGlow {
           0%,100%{ opacity:.2; } 50%{ opacity:.5; }
-        }
-        @keyframes constSpin19 {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
         }
         @keyframes meteorFlow10 {
           0% { transform: translate3d(46vmin, 0, 0); opacity: 0; }
@@ -606,15 +658,13 @@ export default function HiddenConstellation() {
             backdropFilter:"blur(10px)",
           }}>
             <div
-              key={showComplete ? `const-spin-${epilogueStep}` : "const-idle"}
+              ref={spinWrapRef}
               style={{
                 width: svgW,
                 height: svgH,
                 overflow: "visible",
-                animation: showComplete
-                  ? `constSpin19 ${epilogueSpinDurationSec}s linear infinite`
-                  : "none",
                 transformOrigin: "center center",
+                willChange: showComplete ? "transform" : "auto",
               }}
             >
             <svg width={svgW} height={svgH} viewBox={`0 0 ${svgW} ${svgH}`}
