@@ -148,6 +148,8 @@ const EPILOGUE_MESSAGES = [
 const EPILOGUE_FADE_MS = 2800;
 const EPILOGUE_HOLD_MS = 5200;
 const EPILOGUE_GAP_MS = 450;
+/** Extra hold (each) for epilogue slides 1–4 (indices 0–3); last slide unchanged */
+const EPILOGUE_EXTRA_FIRST_FOUR_MS = 2000;
 
 // localStorage helpers — do not resume a finished run (7 stars): always start the picking flow.
 const loadSaved = () => {
@@ -196,7 +198,6 @@ export default function HiddenConstellation() {
     () => typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches
   );
   const [meteorOrientDeg, setMeteorOrientDeg] = useState(() => Math.random() * 360);
-  const [epilogueThroughFiveDone, setEpilogueThroughFiveDone] = useState(false);
 
   const total = 7;
   const count = flaws.length;
@@ -224,11 +225,9 @@ export default function HiddenConstellation() {
     if (!showComplete) {
       setEpilogueStep(0);
       setEpilogueVisible(false);
-      setEpilogueThroughFiveDone(false);
       return;
     }
     let cancelled = false;
-    setEpilogueThroughFiveDone(false);
 
     (async () => {
       const lastIdx = EPILOGUE_MESSAGES.length - 1;
@@ -239,10 +238,14 @@ export default function HiddenConstellation() {
         await new Promise((r) => setTimeout(r, EPILOGUE_GAP_MS));
         if (cancelled) return;
         setEpilogueVisible(true);
-        await new Promise((r) => setTimeout(r, EPILOGUE_FADE_MS + EPILOGUE_HOLD_MS));
+        await new Promise((r) => setTimeout(
+          r,
+          EPILOGUE_FADE_MS +
+            EPILOGUE_HOLD_MS +
+            (i < lastIdx ? EPILOGUE_EXTRA_FIRST_FOUR_MS : 0),
+        ));
         if (cancelled) return;
         if (i === lastIdx) {
-          setEpilogueThroughFiveDone(true);
           return;
         }
         setEpilogueVisible(false);
@@ -404,6 +407,12 @@ export default function HiddenConstellation() {
         .ambient-btn--playing {
           color: rgba(200, 220, 255, 0.88);
         }
+        .ambient-btn-symbol {
+          display: inline-block;
+          font-size: 1.3em;
+          line-height: 1;
+          vertical-align: -0.06em;
+        }
         @media (min-width: 641px) {
           .ambient-btn {
             border-color: rgba(138, 178, 242, 0.32);
@@ -537,7 +546,7 @@ export default function HiddenConstellation() {
 
         {/* Title */}
         <div style={{ textAlign:"center", marginBottom:"1.4rem" }}>
-          {(!showComplete || epilogueThroughFiveDone) && (
+          {!showComplete && (
           <h1 style={{
             fontSize:"clamp(1.5rem,5vw,2.2rem)", fontWeight:400,
             color:"#c8d8f8", margin:"0 0 0.3rem", letterSpacing:"0.06em",
@@ -774,7 +783,15 @@ export default function HiddenConstellation() {
             aria-pressed={ambientPlaying}
             aria-label={ambientPlaying ? "Pause ambient background" : "Play ambient background"}
           >
-            {ambientPlaying ? "◇ pause ambience" : "♪ play ambience"}
+            {ambientPlaying ? (
+              <>
+                <span className="ambient-btn-symbol" aria-hidden>◇</span> pause ambience
+              </>
+            ) : (
+              <>
+                <span className="ambient-btn-symbol" aria-hidden>♪</span> play ambience
+              </>
+            )}
           </button>
         )}
 
