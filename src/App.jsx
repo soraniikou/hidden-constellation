@@ -413,6 +413,9 @@ export default function HiddenConstellation() {
           line-height: 1;
           vertical-align: -0.06em;
         }
+        .ambient-btn-symbol--music {
+          font-size: calc(1.3em * 1.3);
+        }
         @media (min-width: 641px) {
           .ambient-btn {
             border-color: rgba(138, 178, 242, 0.32);
@@ -432,7 +435,12 @@ export default function HiddenConstellation() {
           }
           .epilogue-main-text {
             font-size: clamp(1.104rem, 3.72vw, 1.344rem) !important;
+            word-spacing: 0.045em !important;
+            text-wrap: balance;
           }
+        }
+        .epilogue-main-text {
+          word-spacing: 0.14em;
         }
       `}</style>
 
@@ -789,7 +797,7 @@ export default function HiddenConstellation() {
               </>
             ) : (
               <>
-                <span className="ambient-btn-symbol" aria-hidden>♪</span> play ambience
+                <span className="ambient-btn-symbol ambient-btn-symbol--music" aria-hidden>♪</span> play ambience
               </>
             )}
           </button>
