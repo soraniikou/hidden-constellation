@@ -150,6 +150,9 @@ const EPILOGUE_HOLD_MS = 5200;
 const EPILOGUE_GAP_MS = 450;
 /** Extra hold (each) for epilogue slides 1–4 (indices 0–3); last slide unchanged */
 const EPILOGUE_EXTRA_FIRST_FOUR_MS = 2000;
+/** Final epilogue constellation spin (one turn); step 0 uses half this angular speed (double period). */
+const EPILOGUE_SPIN_FINAL_SEC = 38;
+const EPILOGUE_SPIN_START_SEC = EPILOGUE_SPIN_FINAL_SEC * 2;
 
 // localStorage helpers — do not resume a finished run (7 stars): always start the picking flow.
 const loadSaved = () => {
@@ -212,6 +215,12 @@ export default function HiddenConstellation() {
   const lastEpilogueMeteor = lastEpiloguePinkStars && epilogueVisible;
   /** Darker last-epilogue pink on mobile only (desktop unchanged). */
   const lastPinkMobileDark = lastEpiloguePinkStars && isMobileLayout;
+
+  const epilogueSpinLastIdx = Math.max(EPILOGUE_MESSAGES.length - 1, 1);
+  const epilogueSpinDurationSec = showComplete
+    ? EPILOGUE_SPIN_START_SEC -
+      (EPILOGUE_SPIN_FINAL_SEC * epilogueStep) / epilogueSpinLastIdx
+    : EPILOGUE_SPIN_FINAL_SEC;
 
   // Save to localStorage whenever flaws or constellation changes
   useEffect(() => {
@@ -597,11 +606,14 @@ export default function HiddenConstellation() {
             backdropFilter:"blur(10px)",
           }}>
             <div
+              key={showComplete ? `const-spin-${epilogueStep}` : "const-idle"}
               style={{
                 width: svgW,
                 height: svgH,
                 overflow: "visible",
-                animation: lastEpiloguePinkStars ? "constSpin19 38s linear infinite" : "none",
+                animation: showComplete
+                  ? `constSpin19 ${epilogueSpinDurationSec}s linear infinite`
+                  : "none",
                 transformOrigin: "center center",
               }}
             >
@@ -704,10 +716,22 @@ export default function HiddenConstellation() {
                     <circle cx={p.x} cy={p.y} r={r}
                       fill={lastEpiloguePinkStars ? pinkFill : blueFill}
                       style={{
-                        filter: `drop-shadow(0 0 ${isHov ? 16 : 10}px ${lastEpiloguePinkStars ? pinkGlow : blueGlow})`,
+                        filter: lastEpiloguePinkStars
+                          ? `drop-shadow(0 0 ${isHov ? 18 : 12}px ${pinkGlow}) drop-shadow(0 0 ${isHov ? 7 : 5}px rgba(255,255,255,0.7)) drop-shadow(${isHov ? -2 : -1}px ${isHov ? -3 : -2}px ${isHov ? 6 : 4}px rgba(255,255,255,0.45))`
+                          : `drop-shadow(0 0 ${isHov ? 16 : 10}px ${blueGlow})`,
                         transition: "fill 2.2s ease, filter 2.2s ease",
                         animation: isNew ? "starAppear 0.8s cubic-bezier(0.34,1.56,0.64,1) forwards" : "none",
                       }}/>
+                    {lastEpiloguePinkStars && (
+                      <circle
+                        cx={p.x - r * 0.28}
+                        cy={p.y - r * 0.3}
+                        r={Math.max(r * 0.3, 2.2)}
+                        fill="rgba(255,255,255,0.62)"
+                        opacity={isHov ? 0.92 : 0.58}
+                        style={{ pointerEvents: "none" }}
+                      />
+                    )}
                     <text x={p.x+r+5} y={p.y+4}
                       fill={lastEpiloguePinkStars
                         ? (lastPinkMobileDark ? "rgba(195, 125, 150, 0.82)" : "rgba(255, 175, 205, 0.88)")
