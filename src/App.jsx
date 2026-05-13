@@ -196,6 +196,7 @@ export default function HiddenConstellation() {
     () => typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches
   );
   const [meteorOrientDeg, setMeteorOrientDeg] = useState(() => Math.random() * 360);
+  const [epilogueThroughFiveDone, setEpilogueThroughFiveDone] = useState(false);
 
   const total = 7;
   const count = flaws.length;
@@ -223,9 +224,11 @@ export default function HiddenConstellation() {
     if (!showComplete) {
       setEpilogueStep(0);
       setEpilogueVisible(false);
+      setEpilogueThroughFiveDone(false);
       return;
     }
     let cancelled = false;
+    setEpilogueThroughFiveDone(false);
 
     (async () => {
       const lastIdx = EPILOGUE_MESSAGES.length - 1;
@@ -239,6 +242,7 @@ export default function HiddenConstellation() {
         await new Promise((r) => setTimeout(r, EPILOGUE_FADE_MS + EPILOGUE_HOLD_MS));
         if (cancelled) return;
         if (i === lastIdx) {
+          setEpilogueThroughFiveDone(true);
           return;
         }
         setEpilogueVisible(false);
@@ -415,6 +419,10 @@ export default function HiddenConstellation() {
             right: max(0.4rem, env(safe-area-inset-right, 0px));
             transform: scale(0.7);
             transform-origin: right bottom;
+            font-size: calc(0.72rem * 1.2);
+          }
+          .epilogue-main-text {
+            font-size: clamp(1.104rem, 3.72vw, 1.344rem) !important;
           }
         }
       `}</style>
@@ -473,16 +481,36 @@ export default function HiddenConstellation() {
                 style={{
                   position: "absolute",
                   left: "8px",
-                  right: "0",
+                  right: "-7vmin",
                   top: "50%",
                   height: "5px",
                   marginTop: "-2.5px",
                   borderRadius: "999px",
-                  filter: "blur(1.65px)",
+                  zIndex: 1,
+                  filter: "blur(1.85px)",
                   background:
-                    "linear-gradient(90deg, rgba(255, 238, 248, 0.62) 0%, rgba(255, 210, 228, 0.38) 10%, rgba(255, 195, 215, 0.22) 28%, rgba(255, 185, 205, 0.1) 52%, rgba(255, 185, 205, 0.03) 78%, transparent 100%)",
+                    "linear-gradient(90deg, rgba(255, 238, 248, 0.62) 0%, rgba(255, 210, 228, 0.38) 10%, rgba(255, 195, 215, 0.22) 26%, rgba(255, 185, 205, 0.12) 48%, rgba(255, 185, 205, 0.05) 68%, rgba(255, 190, 205, 0.02) 82%, rgba(255, 195, 215, 0.008) 92%, transparent 100%)",
                   boxShadow:
                     "0 0 22px 10px rgba(255, 205, 225, 0.28), 0 0 40px 18px rgba(255, 185, 210, 0.12), inset 0 0 14px rgba(255, 255, 255, 0.18)",
+                }}
+              />
+              <div
+                aria-hidden
+                style={{
+                  position: "absolute",
+                  left: "22%",
+                  right: "-10vmin",
+                  top: "50%",
+                  height: "8px",
+                  marginTop: "-4px",
+                  zIndex: 0,
+                  filter: "blur(4.5px)",
+                  opacity: 0.5,
+                  borderRadius: "999px",
+                  background:
+                    "linear-gradient(90deg, rgba(255, 210, 228, 0.14) 0%, rgba(255, 200, 218, 0.06) 35%, rgba(255, 190, 210, 0.025) 65%, rgba(255, 188, 208, 0.01) 88%, transparent 100%)",
+                  boxShadow: "0 0 24px 14px rgba(255, 200, 220, 0.12)",
+                  pointerEvents: "none",
                 }}
               />
               <div
@@ -509,6 +537,7 @@ export default function HiddenConstellation() {
 
         {/* Title */}
         <div style={{ textAlign:"center", marginBottom:"1.4rem" }}>
+          {(!showComplete || epilogueThroughFiveDone) && (
           <h1 style={{
             fontSize:"clamp(1.5rem,5vw,2.2rem)", fontWeight:400,
             color:"#c8d8f8", margin:"0 0 0.3rem", letterSpacing:"0.06em",
@@ -520,6 +549,7 @@ export default function HiddenConstellation() {
               WebkitTextFillColor:"transparent", animation:"shimmer 5s linear infinite",
             }}>Constellation</span>
           </h1>
+          )}
           {!showComplete && (
           <p style={{
             color:"rgba(160,185,230,0.38)", fontSize:"0.7rem",
@@ -707,6 +737,7 @@ export default function HiddenConstellation() {
           }}>
             <p
               key={epilogueStep}
+              className="epilogue-main-text"
               style={{
                 fontSize: "clamp(0.92rem, 3.1vw, 1.12rem)",
                 color: "#c8d8ff",
