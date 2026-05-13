@@ -461,9 +461,9 @@ export default function HiddenConstellation() {
                 position: "absolute",
                 left: 0,
                 top: 0,
-                width: "calc(38vmin * 1.4)",
+                width: "calc(38vmin * 1.4 * 1.5)",
                 height: "26px",
-                marginLeft: "calc(-19vmin * 1.4)",
+                marginLeft: "calc(-19vmin * 1.4 * 1.5)",
                 marginTop: "-13px",
                 transformOrigin: "50% 50%",
                 animation: "meteorFlow10 calc(10s / 1.3 + 4s) linear infinite",
@@ -472,7 +472,7 @@ export default function HiddenConstellation() {
               <div
                 style={{
                   position: "absolute",
-                  left: "9px",
+                  left: "8px",
                   right: "0",
                   top: "50%",
                   height: "5px",
@@ -490,9 +490,9 @@ export default function HiddenConstellation() {
                   position: "absolute",
                   left: "0",
                   top: "50%",
-                  width: "8.4px",
-                  height: "8.4px",
-                  marginTop: "-4.2px",
+                  width: "7.56px",
+                  height: "7.56px",
+                  marginTop: "-3.78px",
                   borderRadius: "50%",
                   zIndex: 2,
                   background: "radial-gradient(circle at 30% 26%, #ffffff 0%, #fff5fb 35%, #ffd8ec 72%, #f0b8d8 100%)",
@@ -520,12 +520,14 @@ export default function HiddenConstellation() {
               WebkitTextFillColor:"transparent", animation:"shimmer 5s linear infinite",
             }}>Constellation</span>
           </h1>
+          {!showComplete && (
           <p style={{
             color:"rgba(160,185,230,0.38)", fontSize:"0.7rem",
             letterSpacing:"0.18em", textTransform:"uppercase", margin:0,
           }}>
             {constellation.name} · {count} / {total} stars
           </p>
+          )}
         </div>
 
         {/* Saved notice */}
