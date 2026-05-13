@@ -365,10 +365,11 @@ export default function HiddenConstellation() {
         }
         @keyframes meteorFlow10 {
           0% { transform: translate3d(46vmin, 0, 0); opacity: 0; }
-          6% { opacity: 1; }
-          58% { transform: translate3d(-16vmin, 0, 0); opacity: 1; }
-          82% { transform: translate3d(-44vmin, 0, 0); opacity: 0.38; }
-          100% { transform: translate3d(-54vmin, 0, 0); opacity: 0; }
+          3.95% { opacity: 1; }
+          38.2% { transform: translate3d(-16vmin, 0, 0); opacity: 1; }
+          54% { transform: translate3d(-44vmin, 0, 0); opacity: 0.38; }
+          65.8% { transform: translate3d(-54vmin, 0, 0); opacity: 0; }
+          66%, 100% { transform: translate3d(-54vmin, 0, 0); opacity: 0; }
         }
         * { box-sizing: border-box; }
         .flaw-tag:hover {
@@ -460,18 +461,18 @@ export default function HiddenConstellation() {
                 position: "absolute",
                 left: 0,
                 top: 0,
-                width: "38vmin",
+                width: "calc(38vmin * 1.4)",
                 height: "26px",
-                marginLeft: "-19vmin",
+                marginLeft: "calc(-19vmin * 1.4)",
                 marginTop: "-13px",
                 transformOrigin: "50% 50%",
-                animation: "meteorFlow10 calc(10s / 1.3) linear infinite",
+                animation: "meteorFlow10 calc(10s / 1.3 + 4s) linear infinite",
               }}
             >
               <div
                 style={{
                   position: "absolute",
-                  left: "10px",
+                  left: "9px",
                   right: "0",
                   top: "50%",
                   height: "5px",
@@ -489,9 +490,9 @@ export default function HiddenConstellation() {
                   position: "absolute",
                   left: "0",
                   top: "50%",
-                  width: "10.5px",
-                  height: "10.5px",
-                  marginTop: "-5.25px",
+                  width: "8.4px",
+                  height: "8.4px",
+                  marginTop: "-4.2px",
                   borderRadius: "50%",
                   zIndex: 2,
                   background: "radial-gradient(circle at 30% 26%, #ffffff 0%, #fff5fb 35%, #ffd8ec 72%, #f0b8d8 100%)",
