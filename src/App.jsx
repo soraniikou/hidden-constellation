@@ -954,7 +954,8 @@ export default function HiddenConstellation() {
                   style={{
                     flex:1, background:"transparent", border:"none",
                     color:"rgba(232,240,255,0.98)",
-                    fontFamily:"'Georgia',serif", fontSize:"0.93rem",
+                    fontFamily:"'Georgia',serif",
+                    fontSize:"clamp(0.88rem, 0.72rem + 0.85vw, 0.94rem)",
                   }}/>
                 <button onClick={()=>addFlaw(input)} disabled={!input.trim()} style={{
                   background:input.trim()
@@ -993,7 +994,7 @@ export default function HiddenConstellation() {
                       borderRadius:"1px 7px 1px 5px",
                       cursor:"pointer",
                       fontFamily:"'Georgia', serif",
-                      fontSize:"1.332rem",
+                      fontSize:"clamp(0.86rem, 0.58rem + 1.35vw, 0.96rem)",
                       whiteSpace: "nowrap",
                     }}
                   >
