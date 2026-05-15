@@ -877,7 +877,7 @@ export default function HiddenConstellation() {
               key={epilogueStep}
               className="epilogue-main-text"
               style={{
-                fontSize: "clamp(1.104rem, 3.72vw, 1.344rem)",
+                fontSize: "clamp(0.883rem, 2.976vw, 1.075rem)",
                 color: "#c8d8ff",
                 fontStyle: "italic",
                 lineHeight: 1.78,
