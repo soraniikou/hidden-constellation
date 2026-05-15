@@ -1,6 +1,11 @@
 
-     
-    import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { messages, MOOD_OPTIONS } from "./constants/messages.js";
+import {
+  getConstellationVisuals,
+  getMoodMessage,
+  getMoodEpilogueSequence,
+} from "./utils/stage.js";
 
 const CONSTELLATIONS = [
   {
@@ -137,14 +142,6 @@ const pickRandom = () => CONSTELLATIONS[Math.floor(Math.random() * CONSTELLATION
 /** Drop `public/ambient.mp3` (or change path) for background audio on the complete screen */
 const AMBIENT_AUDIO_SRC = `${import.meta.env.BASE_URL}ambient.mp3`;
 
-const EPILOGUE_MESSAGES = [
-  "Your flaws became a constellation.",
-  "This constellation is a signpost. Someone is looking for you in the night sky.",
-  "Starlight takes centuries to arrive. What you shine today may not reach them in this life.",
-  "Somewhere, they are drawing their own constellation too. Two skies, quietly echoing.",
-  "So if we don't meet in this life ― in the next, I will find you. Without fail.",
-];
-
 const EPILOGUE_FADE_MS = 2800;
 const EPILOGUE_HOLD_MS = 5200;
 const EPILOGUE_GAP_MS = 450;
@@ -182,21 +179,25 @@ const loadSaved = () => {
   try {
     const flawsRaw = localStorage.getItem("hc-flaws");
     const constellationRaw = localStorage.getItem("hc-constellation");
+    const moodRaw = localStorage.getItem("hc-mood");
     let flaws = flawsRaw ? JSON.parse(flawsRaw) : [];
     const constellation = constellationRaw ? JSON.parse(constellationRaw) : pickRandom();
+    const mood = moodRaw && messages[moodRaw] ? moodRaw : null;
     if (Array.isArray(flaws) && flaws.length >= 7) {
       flaws = [];
     }
-    return { flaws, constellation };
+    return { flaws, constellation, mood };
   } catch {
-    return { flaws: [], constellation: pickRandom() };
+    return { flaws: [], constellation: pickRandom(), mood: null };
   }
 };
 
 export default function HiddenConstellation() {
   const saved = loadSaved();
+  const [mood, setMood] = useState(saved.mood);
   const [constellation, setConstellation] = useState(saved.constellation);
   const [flaws, setFlaws] = useState(saved.flaws);
+  const [earlyComplete, setEarlyComplete] = useState(false);
   const [input, setInput] = useState("");
   const [hoveredStar, setHoveredStar] = useState(null);
   const [phase, setPhase] = useState(saved.flaws.length === 7 ? "complete" : "building");
@@ -236,15 +237,22 @@ export default function HiddenConstellation() {
     [flaws],
   );
 
-  const lastMessageIndex = EPILOGUE_MESSAGES.length - 1;
-  /** Pink stars from last epilogue slide onward (stays after sequence ends). */
-  const lastEpiloguePinkStars = showComplete && epilogueStep === lastMessageIndex;
-  /** Shooting star only while last line is visible (fading in/out). */
-  const lastEpilogueMeteor = lastEpiloguePinkStars && epilogueVisible;
+  const epilogueMessages = useMemo(
+    () => (mood ? getMoodEpilogueSequence(mood, messages) : []),
+    [mood],
+  );
+  const lastMessageIndex = Math.max(epilogueMessages.length - 1, 0);
+  const constellationVisuals = getConstellationVisuals(count);
+
+  /** Pink stars: 5+ inputs (5th star onward); core display logic unchanged. */
+  const pinkStarsActive = count >= 5;
+  /** Shooting star while a completion message is visible and pink is active. */
+  const lastEpilogueMeteor = pinkStarsActive && showComplete && epilogueVisible;
+  const lastEpiloguePinkStars = pinkStarsActive;
   /** Darker last-epilogue pink on mobile only (desktop unchanged). */
   const lastPinkMobileDark = lastEpiloguePinkStars && isMobileLayout;
 
-  const epilogueSpinLastIdx = Math.max(EPILOGUE_MESSAGES.length - 1, 1);
+  const epilogueSpinLastIdx = Math.max(epilogueMessages.length - 1, 1);
   const epilogueSpinDurationSec = showComplete
     ? EPILOGUE_SPIN_START_SEC -
       (EPILOGUE_SPIN_FINAL_SEC * epilogueStep) / epilogueSpinLastIdx
@@ -329,13 +337,14 @@ export default function HiddenConstellation() {
     };
   }, [showComplete]);
 
-  // Save to localStorage whenever flaws or constellation changes
+  // Save to localStorage whenever flaws, constellation, or mood changes
   useEffect(() => {
     try {
       localStorage.setItem("hc-flaws", JSON.stringify(flaws));
       localStorage.setItem("hc-constellation", JSON.stringify(constellation));
+      if (mood) localStorage.setItem("hc-mood", mood);
     } catch {}
-  }, [flaws, constellation]);
+  }, [flaws, constellation, mood]);
 
   useEffect(() => {
     if (!showComplete) {
@@ -346,9 +355,20 @@ export default function HiddenConstellation() {
     let cancelled = false;
 
     (async () => {
-      const lastIdx = EPILOGUE_MESSAGES.length - 1;
+      if (earlyComplete) {
+        setEpilogueVisible(false);
+        await new Promise((r) => setTimeout(r, EPILOGUE_GAP_MS));
+        if (cancelled) return;
+        setEpilogueStep(lastMessageIndex);
+        setEpilogueVisible(true);
+        return;
+      }
+
+      const lastIdx = epilogueMessages.length - 1;
+      if (lastIdx < 0) return;
+
       setEpilogueVisible(false);
-      for (let i = 0; i < EPILOGUE_MESSAGES.length; i++) {
+      for (let i = 0; i < epilogueMessages.length; i++) {
         if (cancelled) return;
         if (i > 0) {
           setEpilogueVisible(false);
@@ -376,7 +396,7 @@ export default function HiddenConstellation() {
     return () => {
       cancelled = true;
     };
-  }, [showComplete]);
+  }, [showComplete, earlyComplete, epilogueMessages, lastMessageIndex]);
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 640px)");
@@ -414,8 +434,23 @@ export default function HiddenConstellation() {
     setLineKeys(newKeys);
 
     if (next.length === total) {
+      setEarlyComplete(false);
       setTimeout(() => { setPhase("complete"); setTimeout(() => setShowComplete(true), 600); }, 400);
     }
+  };
+
+  const finishConstellation = () => {
+    if (count < 3) return;
+    setEarlyComplete(true);
+    setPhase("complete");
+    setTimeout(() => setShowComplete(true), 600);
+  };
+
+  const selectMood = (moodId) => {
+    setMood(moodId);
+    try {
+      localStorage.setItem("hc-mood", moodId);
+    } catch {}
   };
 
   const reset = () => {
@@ -423,9 +458,12 @@ export default function HiddenConstellation() {
     try {
       localStorage.removeItem("hc-flaws");
       localStorage.removeItem("hc-constellation");
+      localStorage.removeItem("hc-mood");
     } catch {}
+    setMood(null);
     setFlaws([]); setInput(""); setPhase("building");
-    setShowComplete(false); setHoveredStar(null);
+    setShowComplete(false); setEarlyComplete(false);
+    setHoveredStar(null);
     setLineKeys({}); setNewStarIdx(null);
     setConstellation(pickRandom());
     try {
@@ -557,7 +595,94 @@ export default function HiddenConstellation() {
         .epilogue-main-text {
           word-spacing: 0.28em;
         }
+        .mood-screen {
+          text-align: center;
+          width: 100%;
+          max-width: 420px;
+        }
+        .mood-screen h2 {
+          font-size: clamp(1.1rem, 3.2vw, 1.45rem);
+          font-weight: 400;
+          color: #c8d8f8;
+          letter-spacing: 0.08em;
+          margin: 0 0 1.6rem;
+          font-style: italic;
+        }
+        .mood-option {
+          display: block;
+          width: 100%;
+          text-align: left;
+          background: rgba(50, 70, 130, 0.12);
+          border: 1px solid rgba(100, 140, 220, 0.14);
+          color: rgba(200, 218, 248, 0.82);
+          padding: 0.85rem 1rem;
+          margin-bottom: 0.55rem;
+          border-radius: 4px 14px 4px 10px;
+          cursor: pointer;
+          font-family: 'Georgia', serif;
+          font-size: clamp(0.88rem, 0.75rem + 0.5vw, 0.98rem);
+          transition: border-color 0.35s, background 0.35s, box-shadow 0.35s;
+        }
+        .mood-option:hover {
+          border-color: rgba(168, 200, 255, 0.32);
+          background: rgba(80, 110, 180, 0.18);
+          box-shadow: 0 0 18px rgba(120, 160, 230, 0.12);
+        }
+        .mood-option-label {
+          letter-spacing: 0.06em;
+        }
+        .finish-early-btn {
+          display: block;
+          width: 100%;
+          margin-top: 0.65rem;
+          background: transparent;
+          border: 1px solid rgba(200, 215, 245, 0.14);
+          color: rgba(210, 224, 255, 0.42);
+          padding: 0.5rem 0.75rem;
+          border-radius: 2px 12px 2px 8px;
+          cursor: pointer;
+          font-family: 'Georgia', serif;
+          font-size: clamp(0.78rem, 0.68rem + 0.35vw, 0.86rem);
+          letter-spacing: 0.04em;
+          font-style: italic;
+          transition: border-color 0.35s, color 0.35s, box-shadow 0.35s;
+        }
+        .finish-early-btn:hover {
+          border-color: rgba(200, 220, 255, 0.32);
+          color: rgba(228, 238, 255, 0.72);
+          box-shadow: 0 0 14px rgba(168, 200, 255, 0.1);
+        }
       `}</style>
+
+      {!mood && (
+        <div
+          style={{
+            position: "relative",
+            zIndex: 2,
+            minHeight: "100vh",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "1.5rem 1rem",
+          }}
+        >
+          <div className="mood-screen">
+            <h2>how does tonight feel?</h2>
+            {MOOD_OPTIONS.map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                className="mood-option"
+                onClick={() => selectMood(opt.id)}
+              >
+                <span className="mood-option-label">
+                  {opt.emoji} {opt.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Star field */}
       <div style={{ position:"fixed", inset:0, pointerEvents:"none", zIndex:0 }}>
@@ -572,7 +697,7 @@ export default function HiddenConstellation() {
         ))}
       </div>
 
-      {lastEpilogueMeteor && (
+      {mood && lastEpilogueMeteor && (
         <div
           aria-hidden
           style={{
@@ -665,6 +790,7 @@ export default function HiddenConstellation() {
         </div>
       )}
 
+      {mood && (
       <div style={{ position:"relative", zIndex:2, width:"100%", maxWidth:"440px" }}>
 
         {/* Title */}
@@ -687,7 +813,7 @@ export default function HiddenConstellation() {
             color:"rgba(160,185,230,0.38)", fontSize:"0.7rem",
             letterSpacing:"0.18em", textTransform:"uppercase", margin:0,
           }}>
-            {constellation.name} · {count} / {total} stars
+            {constellation.name}
           </p>
           )}
         </div>
@@ -746,21 +872,25 @@ export default function HiddenConstellation() {
               {/* Lines */}
               {constellation.lines.map(([a,b])=>{
                 const key=`${a}-${b}`;
-                if(!lineKeys[key]) return null;
+                if(!lineKeys[key] || !constellationVisuals.showLines) return null;
                 const pa=pos(constellation.stars[a]);
                 const pb=pos(constellation.stars[b]);
                 const len=Math.hypot(pb.x-pa.x,pb.y-pa.y);
+                const lineO = constellationVisuals.lineOpacity;
+                const blueA = 0.28 * lineO;
+                const pinkA = (lastPinkMobileDark ? 0.5 : 0.55) * lineO;
                 return <line key={key}
                   x1={pa.x} y1={pa.y} x2={pb.x} y2={pb.y}
                   stroke={lastEpiloguePinkStars
-                    ? (lastPinkMobileDark ? "rgba(175, 75, 110, 0.5)" : "rgba(255, 140, 178, 0.55)")
-                    : "rgba(168,200,255,0.28)"}
+                    ? (lastPinkMobileDark ? `rgba(175, 75, 110, ${pinkA})` : `rgba(255, 140, 178, ${pinkA})`)
+                    : `rgba(168,200,255,${blueA})`}
                   strokeWidth="1" strokeLinecap="round"
                   style={{
                     strokeDasharray: len,
                     strokeDashoffset: 0,
                     "--len": len,
-                    transition: "stroke 2.2s ease",
+                    transition: "stroke 2.2s ease, opacity 1.2s ease",
+                    opacity: lineO,
                   }}/>;
               })}
 
@@ -793,7 +923,11 @@ export default function HiddenConstellation() {
                 const blueFill = isHov ? "#fff" : "#a8c8ff";
                 const blueGlow = isHov ? "#fff" : "#a8c8ff";
                 return (
-                  <g key={`s${i}`} style={{cursor:"pointer"}}
+                  <g key={`s${i}`} style={{
+                    cursor:"pointer",
+                    opacity: constellationVisuals.starOpacity,
+                    transition: "opacity 1.2s ease",
+                  }}
                     onMouseEnter={()=>setHoveredStar(i)}
                     onMouseLeave={()=>setHoveredStar(null)}>
                     <circle cx={p.x} cy={p.y} r={r+10}
@@ -889,7 +1023,9 @@ export default function HiddenConstellation() {
                 textShadow: "0 0 28px rgba(90, 120, 200, 0.12)",
               }}
             >
-              {EPILOGUE_MESSAGES[epilogueStep]}
+              {earlyComplete
+                ? getMoodMessage(mood, count, messages)
+                : epilogueMessages[epilogueStep]}
             </p>
           </div>
         )}
@@ -972,6 +1108,16 @@ export default function HiddenConstellation() {
               </div>
             </div>
 
+            {count >= 3 && (
+              <button
+                type="button"
+                className="finish-early-btn"
+                onClick={finishConstellation}
+              >
+                let this be my constellation
+              </button>
+            )}
+
             <div style={{
               display: "grid",
               gridTemplateColumns: "repeat(4, 1fr)",
@@ -1040,6 +1186,7 @@ export default function HiddenConstellation() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }
