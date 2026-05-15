@@ -1,6 +1,6 @@
 
      
-    import { useState, useEffect, useRef } from "react";
+    import { useState, useEffect, useRef, useMemo } from "react";
 
 const CONSTELLATIONS = [
   {
@@ -149,7 +149,7 @@ const EPILOGUE_FADE_MS = 2800;
 const EPILOGUE_HOLD_MS = 5200;
 const EPILOGUE_GAP_MS = 450;
 /** Extra hold (each) for epilogue slides 1–4 (indices 0–3); last slide unchanged */
-const EPILOGUE_EXTRA_FIRST_FOUR_MS = 2000;
+const EPILOGUE_EXTRA_FIRST_FOUR_MS = 4000;
 /** Final epilogue constellation spin (one turn); step 0 uses half this angular speed (double period). */
 const EPILOGUE_SPIN_FINAL_SEC = 38;
 const EPILOGUE_SPIN_START_SEC = EPILOGUE_SPIN_FINAL_SEC * 2;
@@ -159,6 +159,22 @@ const EPILOGUE_SPIN_BLEND_MS = 1500;
 function easeInOutCubic(t) {
   const x = Math.min(1, Math.max(0, t));
   return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+}
+
+/** Stable per-tag offset for scattered flaw-tag buttons on the building screen. */
+function flawTagScatter(tag) {
+  let h = 0;
+  for (let i = 0; i < tag.length; i++) {
+    h = (Math.imul(31, h) + tag.charCodeAt(i)) | 0;
+  }
+  const hx = ((h & 0xffff) >>> 0) / 0xffff;
+  const hy = (((h >>> 16) & 0xffff) >>> 0) / 0xffff;
+  const hr = (((h >>> 8) & 0xff) >>> 0) / 255;
+  return {
+    x: (hx - 0.5) * 16,
+    y: (hy - 0.5) * 12,
+    rot: (hr - 0.5) * 2.4,
+  };
 }
 
 // localStorage helpers — do not resume a finished run (7 stars): always start the picking flow.
@@ -214,6 +230,11 @@ export default function HiddenConstellation() {
   const svgW = 300;
   const svgH = 320;
   const pos = (star) => ({ x: star.x * svgW, y: star.y * svgH });
+
+  const visibleFlawTags = useMemo(
+    () => FLAW_TAGS.filter((t) => !flaws.some((f) => f.text === t)).slice(0, 12),
+    [flaws],
+  );
 
   const lastMessageIndex = EPILOGUE_MESSAGES.length - 1;
   /** Pink stars from last epilogue slide onward (stays after sequence ends). */
@@ -326,12 +347,18 @@ export default function HiddenConstellation() {
 
     (async () => {
       const lastIdx = EPILOGUE_MESSAGES.length - 1;
+      setEpilogueVisible(false);
       for (let i = 0; i < EPILOGUE_MESSAGES.length; i++) {
         if (cancelled) return;
+        if (i > 0) {
+          setEpilogueVisible(false);
+          await new Promise((r) => setTimeout(r, EPILOGUE_FADE_MS + EPILOGUE_GAP_MS));
+          if (cancelled) return;
+        } else {
+          await new Promise((r) => setTimeout(r, EPILOGUE_GAP_MS));
+          if (cancelled) return;
+        }
         setEpilogueStep(i);
-        setEpilogueVisible(false);
-        await new Promise((r) => setTimeout(r, EPILOGUE_GAP_MS));
-        if (cancelled) return;
         setEpilogueVisible(true);
         await new Promise((r) => setTimeout(
           r,
@@ -343,8 +370,6 @@ export default function HiddenConstellation() {
         if (i === lastIdx) {
           return;
         }
-        setEpilogueVisible(false);
-        await new Promise((r) => setTimeout(r, EPILOGUE_FADE_MS + EPILOGUE_GAP_MS));
       }
     })();
 
@@ -375,7 +400,7 @@ export default function HiddenConstellation() {
     setFlaws(next);
     setNewStarIdx(idx);
     setInput("");
-    setTimeout(() => setNewStarIdx(null), 900);
+    setTimeout(() => setNewStarIdx(null), 1400);
 
     const newKeys = { ...lineKeys };
     constellation.lines.forEach(([a, b]) => {
@@ -436,8 +461,7 @@ export default function HiddenConstellation() {
     }}>
       <style>{`
         @keyframes starAppear {
-          0%   { opacity: 0; transform: scale(0); filter: drop-shadow(0 0 24px #fff); }
-          55%  { opacity: 1; transform: scale(1.6); }
+          0%   { opacity: 0; transform: scale(0.42); filter: drop-shadow(0 0 0 transparent); }
           100% { opacity: 1; transform: scale(1); }
         }
         @keyframes starPulse {
@@ -525,13 +549,13 @@ export default function HiddenConstellation() {
             font-size: calc(0.72rem * 1.2);
           }
           .epilogue-main-text {
-            font-size: clamp(1.104rem, 3.72vw, 1.344rem) !important;
-            word-spacing: 0.045em !important;
+            font-size: clamp(1.656rem, 5.58vw, 2.016rem) !important;
+            word-spacing: 0.09em !important;
             text-wrap: balance;
           }
         }
         .epilogue-main-text {
-          word-spacing: 0.14em;
+          word-spacing: 0.28em;
         }
       `}</style>
 
@@ -582,7 +606,7 @@ export default function HiddenConstellation() {
                 marginLeft: "calc(-19vmin * 1.4 * 1.5)",
                 marginTop: "-13px",
                 transformOrigin: "50% 50%",
-                animation: "meteorFlow10 calc(10s / 1.3 + 4s) linear infinite",
+                animation: "meteorFlow10 calc(10s / 1.3 + 6s) linear infinite",
               }}
             >
               <div
@@ -668,24 +692,15 @@ export default function HiddenConstellation() {
           )}
         </div>
 
-        {/* Saved notice */}
-        {count > 0 && count < total && (
-          <div style={{
-            textAlign:"center", marginBottom:"0.8rem",
-            fontSize:"0.65rem", letterSpacing:"0.12em",
-            color:"rgba(140,180,220,0.4)",
-          }}>
-            ✦ your progress is saved · come back anytime
-          </div>
-        )}
-
         {/* SVG */}
         <div style={{ display:"flex", justifyContent:"center", marginBottom:"1.2rem" }}>
           <div style={{
             background:"rgba(7,5,20,0.78)",
             border:"1px solid rgba(100,140,220,0.11)",
-            borderRadius:"14px", padding:"0.9rem",
+            borderRadius:"14px",
+            padding: showComplete ? "1.35rem" : "0.9rem",
             backdropFilter:"blur(10px)",
+            overflow: showComplete ? "visible" : "hidden",
           }}>
             <div
               ref={spinWrapRef}
@@ -796,11 +811,13 @@ export default function HiddenConstellation() {
                     <circle cx={p.x} cy={p.y} r={r}
                       fill={lastEpiloguePinkStars ? pinkFill : blueFill}
                       style={{
+                        transformOrigin: `${p.x}px ${p.y}px`,
+                        transformBox: "fill-box",
                         filter: lastEpiloguePinkStars
                           ? `drop-shadow(0 0 ${isHov ? 18 : 12}px ${pinkGlow}) drop-shadow(0 0 ${isHov ? 7 : 5}px rgba(255,255,255,0.7)) drop-shadow(${isHov ? -2 : -1}px ${isHov ? -3 : -2}px ${isHov ? 6 : 4}px rgba(255,255,255,0.45))`
                           : `drop-shadow(0 0 ${isHov ? 16 : 10}px ${blueGlow})`,
                         transition: "fill 2.2s ease, filter 2.2s ease",
-                        animation: isNew ? "starAppear 0.8s cubic-bezier(0.34,1.56,0.64,1) forwards" : "none",
+                        animation: isNew ? "starAppear 1.4s cubic-bezier(0.22, 0.61, 0.36, 1) forwards" : "none",
                       }}/>
                     {lastEpiloguePinkStars && (
                       <circle
@@ -860,7 +877,7 @@ export default function HiddenConstellation() {
               key={epilogueStep}
               className="epilogue-main-text"
               style={{
-                fontSize: "clamp(0.92rem, 3.1vw, 1.12rem)",
+                fontSize: "clamp(1.38rem, 4.65vw, 1.68rem)",
                 color: "#c8d8ff",
                 fontStyle: "italic",
                 lineHeight: 1.78,
@@ -929,14 +946,7 @@ export default function HiddenConstellation() {
               padding:"0.85rem 1.1rem", marginBottom:"0.85rem",
               backdropFilter:"blur(6px)",
             }}>
-              <div style={{
-                fontSize:"0.57rem",letterSpacing:"0.2em",
-                color:"rgba(190,210,248,0.78)",
-                fontFamily:"'Courier New',monospace",marginBottom:"0.5rem",
-              }}>
-                star {count+1} of {total}
-              </div>
-              <div style={{display:"flex",gap:"0.55rem",alignItems:"center"}}>
+<div style={{display:"flex",gap:"0.55rem",alignItems:"center"}}>
                 <input ref={inputRef} value={input}
                   onChange={e=>setInput(e.target.value)}
                   onKeyDown={e=>e.key==="Enter"&&addFlaw(input)}
@@ -961,16 +971,34 @@ export default function HiddenConstellation() {
               </div>
             </div>
 
-            <div style={{display:"flex",flexWrap:"wrap",gap:"0.36rem",justifyContent:"center"}}>
-              {FLAW_TAGS.filter(t=>!flaws.some(f=>f.text===t)).slice(0,12).map(tag=>(
-                <button key={tag} className="flaw-tag" onClick={()=>addFlaw(tag)} style={{
-                  background:"rgba(50,70,130,0.16)",
-                  border:"1px solid rgba(100,140,220,0.14)",
-                  color:"rgba(165,192,232,0.58)",
-                  padding:"0.25rem 0.68rem",
-                  borderRadius:"1px 7px 1px 5px",
-                  cursor:"pointer", fontFamily:"'Georgia',serif", fontSize:"0.74rem",
-                }}>{tag}</button>
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(4, 1fr)",
+              columnGap: "2.3rem",
+              rowGap: "2rem",
+              padding: "0.6rem 0.35rem 0.2rem",
+              width: "100%",
+              justifyItems: "center",
+            }}>
+              {visibleFlawTags.map((tag) => (
+                  <button
+                    key={tag}
+                    className="flaw-tag"
+                    onClick={() => addFlaw(tag)}
+                    style={{
+                      background:"rgba(50,70,130,0.16)",
+                      border:"1px solid rgba(100,140,220,0.14)",
+                      color:"rgba(165,192,232,0.58)",
+                      padding:"0.25rem 0.68rem",
+                      borderRadius:"1px 7px 1px 5px",
+                      cursor:"pointer",
+                      fontFamily:"'Georgia', serif",
+                      fontSize:"1.332rem",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {tag}
+                  </button>
               ))}
             </div>
           </div>
@@ -999,7 +1027,7 @@ export default function HiddenConstellation() {
             <button onClick={reset} style={{
               background:"transparent",
               border:"1px solid rgba(168,200,255,0.2)",
-              color:"rgba(168,200,255,0.52)",
+              color:"rgba(188,214,255,0.72)",
               padding:"0.52rem 1.5rem",
               borderRadius:"2px 12px 2px 10px",
               cursor:"pointer", fontFamily:"'Georgia',serif",
