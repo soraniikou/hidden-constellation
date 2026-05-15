@@ -587,13 +587,13 @@ export default function HiddenConstellation() {
             font-size: calc(0.72rem * 1.2);
           }
           .epilogue-main-text {
-            font-size: clamp(1.325rem, 4.464vw, 1.613rem) !important;
-            word-spacing: 0.09em !important;
+            font-size: clamp(1.855rem, 6.246vw, 2.258rem) !important;
+            word-spacing: 0.18em !important;
             text-wrap: balance;
           }
         }
         .epilogue-main-text {
-          word-spacing: 0.28em;
+          word-spacing: 0.56em;
         }
         .mood-screen {
           text-align: center;
@@ -731,7 +731,7 @@ export default function HiddenConstellation() {
                 marginLeft: "calc(-19vmin * 1.4 * 1.5)",
                 marginTop: "-13px",
                 transformOrigin: "50% 50%",
-                animation: "meteorFlow10 calc(10s / 1.3 + 6s) linear infinite",
+                animation: "meteorFlow10 calc(10s / 1.3 + 7.5s) linear infinite",
               }}
             >
               <div
@@ -1011,7 +1011,7 @@ export default function HiddenConstellation() {
               key={epilogueStep}
               className="epilogue-main-text"
               style={{
-                fontSize: "clamp(0.883rem, 2.976vw, 1.075rem)",
+                fontSize: "clamp(1.236rem, 4.166vw, 1.505rem)",
                 color: "#c8d8ff",
                 fontStyle: "italic",
                 lineHeight: 1.78,
