@@ -549,7 +549,7 @@ export default function HiddenConstellation() {
             font-size: calc(0.72rem * 1.2);
           }
           .epilogue-main-text {
-            font-size: clamp(1.656rem, 5.58vw, 2.016rem) !important;
+            font-size: clamp(1.325rem, 4.464vw, 1.613rem) !important;
             word-spacing: 0.09em !important;
             text-wrap: balance;
           }
@@ -877,7 +877,7 @@ export default function HiddenConstellation() {
               key={epilogueStep}
               className="epilogue-main-text"
               style={{
-                fontSize: "clamp(1.38rem, 4.65vw, 1.68rem)",
+                fontSize: "clamp(1.104rem, 3.72vw, 1.344rem)",
                 color: "#c8d8ff",
                 fontStyle: "italic",
                 lineHeight: 1.78,
