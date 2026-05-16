@@ -158,6 +158,49 @@ function easeInOutCubic(t) {
   return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
 }
 
+/** Epilogue: black → navy cross-fade (spinning constellation scene). */
+const EPILOGUE_BACKGROUND_RAMP_MS = 12000;
+
+/** Per-message stage navy; stage 1 darkest, stage 5 brightest. */
+const NAVY_STAGE_GRADIENT_STOPS = [
+  { inner: [6, 10, 32], outer: [2, 3, 18] },
+  { inner: [12, 16, 46], outer: [4, 6, 28] },
+  { inner: [20, 26, 68], outer: [6, 9, 44] },
+  { inner: [30, 38, 98], outer: [9, 13, 64] },
+  { inner: [46, 60, 136], outer: [12, 20, 90] },
+];
+const NAVY_ORIGIN_BLACK = [0, 0, 6];
+
+function lerpRgb(from, to, t) {
+  const u = Math.min(1, Math.max(0, t));
+  const r = Math.round(from[0] + (to[0] - from[0]) * u);
+  const g = Math.round(from[1] + (to[1] - from[1]) * u);
+  const b = Math.round(from[2] + (to[2] - from[2]) * u);
+  return `${r},${g},${b}`;
+}
+
+/** Radial navy sky: eased black→navy over `easedRamp`, tone follows epilogue slide (stage). */
+function buildEpilogueBackdrop(epilogueSlideIndex, easedRamp) {
+  const clampedSlide = Math.max(
+    0,
+    Math.min(epilogueSlideIndex, NAVY_STAGE_GRADIENT_STOPS.length - 1),
+  );
+  const stops = NAVY_STAGE_GRADIENT_STOPS[clampedSlide];
+  const innerRgb = lerpRgb(NAVY_ORIGIN_BLACK, stops.inner, easedRamp);
+  const outerRgb = lerpRgb(NAVY_ORIGIN_BLACK, stops.outer, easedRamp);
+  const midBlend = 0.52;
+  const i = stops.inner;
+  const o = stops.outer;
+  const midPt = [
+    i[0] + (o[0] - i[0]) * midBlend,
+    i[1] + (o[1] - i[1]) * midBlend,
+    i[2] + (o[2] - i[2]) * midBlend,
+  ];
+  const midRgb = lerpRgb(NAVY_ORIGIN_BLACK, midPt, easedRamp);
+
+  return `radial-gradient(ellipse 132% 100% at 50% 40%, rgb(${innerRgb}) 0%, rgb(${midRgb}) 46%, rgb(${outerRgb}) 100%)`;
+}
+
 /** Stable per-tag offset for scattered flaw-tag buttons on the building screen. */
 function flawTagScatter(tag) {
   let h = 0;
@@ -225,6 +268,7 @@ export default function HiddenConstellation() {
     () => typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches
   );
   const [meteorOrientDeg, setMeteorOrientDeg] = useState(() => Math.random() * 360);
+  const [epilogueElapsedMs, setEpilogueElapsedMs] = useState(0);
 
   const total = 7;
   const count = flaws.length;
@@ -412,6 +456,29 @@ export default function HiddenConstellation() {
     }
   }, [lastEpilogueMeteor]);
 
+  /** Epilogue rotating scene: sky dark → navy cross-fade (12s) + brighten per slide (stage). */
+  useEffect(() => {
+    if (!showComplete) {
+      setEpilogueElapsedMs(0);
+      return;
+    }
+    const t0 = Date.now();
+    const id = setInterval(() => {
+      const elapsed = Date.now() - t0;
+      setEpilogueElapsedMs(elapsed);
+      if (elapsed >= EPILOGUE_BACKGROUND_RAMP_MS) {
+        clearInterval(id);
+      }
+    }, 100);
+    return () => clearInterval(id);
+  }, [showComplete]);
+
+  const epilogueBackdrop = useMemo(() => {
+    const rawRamp = Math.min(1, epilogueElapsedMs / EPILOGUE_BACKGROUND_RAMP_MS);
+    const easedRamp = easeInOutCubic(rawRamp);
+    return buildEpilogueBackdrop(epilogueStep, easedRamp);
+  }, [epilogueElapsedMs, epilogueStep]);
+
   const addFlaw = (text) => {
     if (!text.trim() || count >= total) return;
     const sig = complexToSignature(text);
@@ -490,7 +557,8 @@ export default function HiddenConstellation() {
 
   return (
     <div style={{
-      minHeight: "100vh", width: "100vw", background: "#03020b",
+      minHeight: "100vh", width: "100vw",
+      background: showComplete ? epilogueBackdrop : "#03020b",
       display: "flex", flexDirection: "column",
       alignItems: "center", justifyContent: "center",
       padding: "1.5rem 1rem", fontFamily: "'Georgia', serif",
