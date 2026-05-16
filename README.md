@@ -5,8 +5,6 @@
 自分の気になる点を自由に書く
 または選択肢から選んで下さい
 
-7個欠点を書いたら　7個目に素敵な星座🌠となり
-あなたの欠点は輝きだします
 
 アプリ体験
 https://hidden-constellation.vercel.app
@@ -18,3 +16,4 @@ https://hidden-constellation.vercel.app
 
 
 <img width="470" height="477" alt="anatato2" src="https://github.com/user-attachments/assets/2280a513-ed7e-4ea8-9e0c-ee83de9374a9" />
+<img src="seiza.png" width="80%" alt="seiza">
