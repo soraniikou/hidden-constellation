@@ -139,9 +139,6 @@ const complexToSignature = (text) => {
 
 const pickRandom = () => CONSTELLATIONS[Math.floor(Math.random() * CONSTELLATIONS.length)];
 
-/** Drop `public/ambient.mp3` (or change path) for background audio on the complete screen */
-const AMBIENT_AUDIO_SRC = `${import.meta.env.BASE_URL}ambient.mp3`;
-
 const EPILOGUE_FADE_MS = 2800;
 const EPILOGUE_HOLD_MS = 5200;
 const EPILOGUE_GAP_MS = 450;
@@ -259,11 +256,9 @@ export default function HiddenConstellation() {
     return keys;
   });
   const inputRef = useRef(null);
-  const audioRef = useRef(null);
 
   const [epilogueStep, setEpilogueStep] = useState(0);
   const [epilogueVisible, setEpilogueVisible] = useState(false);
-  const [ambientPlaying, setAmbientPlaying] = useState(false);
   const [isMobileLayout, setIsMobileLayout] = useState(
     () => typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches
   );
@@ -533,26 +528,6 @@ export default function HiddenConstellation() {
     setHoveredStar(null);
     setLineKeys({}); setNewStarIdx(null);
     setConstellation(pickRandom());
-    try {
-      audioRef.current?.pause();
-    } catch {}
-    setAmbientPlaying(false);
-  };
-
-  const toggleAmbient = async () => {
-    const el = audioRef.current;
-    if (!el) return;
-    try {
-      if (el.paused) {
-        await el.play();
-        setAmbientPlaying(true);
-      } else {
-        el.pause();
-        setAmbientPlaying(false);
-      }
-    } catch {
-      setAmbientPlaying(false);
-    }
   };
 
   return (
@@ -607,55 +582,10 @@ export default function HiddenConstellation() {
         }
         input::placeholder{ color:rgba(255,255,255,0.95) !important; }
         input:focus{ outline:none; }
-        .ambient-btn {
-          position: fixed;
-          bottom: 1.15rem;
-          right: 1.15rem;
-          z-index: 3;
-          background: rgba(8, 6, 22, 0.72);
-          border: 1px solid rgba(120, 160, 230, 0.22);
-          color: rgba(160, 190, 240, 0.55);
-          padding: 0.45rem 1.15rem;
-          border-radius: 2px 14px 2px 10px;
-          cursor: pointer;
-          font-family: 'Georgia', serif;
-          font-size: 0.72rem;
-          letter-spacing: 0.14em;
-          text-transform: uppercase;
-          backdrop-filter: blur(8px);
-          transition: border-color 0.3s, color 0.3s;
-        }
-        .ambient-btn--playing {
-          color: rgba(200, 220, 255, 0.88);
-        }
-        .ambient-btn-symbol {
-          display: inline-block;
-          font-size: 1.3em;
-          line-height: 1;
-          vertical-align: -0.06em;
-        }
-        .ambient-btn-symbol--music {
-          font-size: calc(1.3em * 1.3);
-        }
-        @media (min-width: 641px) {
-          .ambient-btn {
-            border-color: rgba(138, 178, 242, 0.32);
-            color: rgba(182, 210, 252, 0.72);
-          }
-          .ambient-btn--playing {
-            color: rgba(224, 238, 255, 0.95);
-          }
-        }
         @media (max-width: 640px) {
-          .ambient-btn {
-            bottom: max(0.45rem, env(safe-area-inset-bottom, 0px));
-            right: max(0.4rem, env(safe-area-inset-right, 0px));
-            transform: scale(0.7);
-            transform-origin: right bottom;
-            font-size: calc(0.72rem * 1.2);
-          }
           .epilogue-main-text {
-            font-size: clamp(1.855rem, 6.246vw, 2.258rem) !important;
+            font-size: clamp(1.67rem, 5.62vw, 2.03rem) !important;
+            color: #a8b6dc !important;
             word-spacing: 0.18em !important;
             text-wrap: balance;
           }
@@ -1096,36 +1026,6 @@ export default function HiddenConstellation() {
                 : epilogueMessages[epilogueStep]}
             </p>
           </div>
-        )}
-
-        <audio
-          ref={audioRef}
-          src={AMBIENT_AUDIO_SRC}
-          loop
-          preload="none"
-          onPlay={() => setAmbientPlaying(true)}
-          onPause={() => setAmbientPlaying(false)}
-          onEnded={() => setAmbientPlaying(false)}
-        />
-
-        {showComplete && (
-          <button
-            type="button"
-            className={`ambient-btn${ambientPlaying ? " ambient-btn--playing" : ""}`}
-            onClick={toggleAmbient}
-            aria-pressed={ambientPlaying}
-            aria-label={ambientPlaying ? "Pause ambient background" : "Play ambient background"}
-          >
-            {ambientPlaying ? (
-              <>
-                <span className="ambient-btn-symbol" aria-hidden>◇</span> pause ambience
-              </>
-            ) : (
-              <>
-                <span className="ambient-btn-symbol ambient-btn-symbol--music" aria-hidden>♪</span> play ambience
-              </>
-            )}
-          </button>
         )}
 
         {/* Input */}
