@@ -143,7 +143,9 @@ const EPILOGUE_FADE_MS = 2800;
 const EPILOGUE_HOLD_MS = 6200;
 const EPILOGUE_GAP_MS = 450;
 /** Delay between each word appearing in epilogue messages. */
-const EPILOGUE_WORD_DELAY_MS = 330;
+const EPILOGUE_WORD_DELAY_MS = 660;
+/** Auto-show flaw → signature tooltip after picking a chip (+Star); was 1.4s, +5s. */
+const FLAW_SIGNATURE_REVEAL_MS = 6400;
 /** Extra hold (each) for epilogue slides 1–4 (indices 0–3); last slide unchanged */
 const EPILOGUE_EXTRA_FIRST_FOUR_MS = 4000;
 /** Final epilogue constellation spin (one turn); step 0 uses half this angular speed (double period). */
@@ -286,7 +288,7 @@ function EpilogueStaggeredMessage({ text, visible, className, style }) {
           key={`${i}-${word}`}
           style={{
             opacity: visible && i < shownCount ? 1 : 0,
-            transition: "opacity 1.26s ease",
+            transition: "opacity 2.52s ease",
           }}
         >
           {word}
@@ -601,7 +603,7 @@ export default function HiddenConstellation() {
     setFlaws(next);
     setNewStarIdx(idx);
     setInput("");
-    setTimeout(() => setNewStarIdx(null), 1400);
+    setTimeout(() => setNewStarIdx(null), FLAW_SIGNATURE_REVEAL_MS);
 
     const newKeys = { ...lineKeys };
     constellation.lines.forEach(([a, b]) => {
@@ -1039,7 +1041,7 @@ export default function HiddenConstellation() {
                 const flaw=flaws.find(f=>f.starIdx===i);
                 if(!flaw) return null;
                 const p=pos(star); const r=star.size/2;
-                const isNew=newStarIdx===i; const isHov=hoveredStar===i;
+                const isNew=newStarIdx===i; const isHov=hoveredStar===i||newStarIdx===i;
                 const pinkFill = isHov
                   ? `url(#${lastPinkMobileDark ? "hc-star-pink-hover-m" : "hc-star-pink-hover"})`
                   : `url(#${lastPinkMobileDark ? "hc-star-pink-m" : "hc-star-pink"})`;
@@ -1055,7 +1057,9 @@ export default function HiddenConstellation() {
                     transition: "opacity 1.2s ease",
                   }}
                     onMouseEnter={()=>setHoveredStar(i)}
-                    onMouseLeave={()=>setHoveredStar(null)}>
+                    onMouseLeave={()=>{
+                      if (newStarIdx !== i) setHoveredStar(null);
+                    }}>
                     <circle cx={p.x} cy={p.y} r={r+10}
                       fill="none"
                       stroke={lastEpiloguePinkStars
