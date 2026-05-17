@@ -143,7 +143,7 @@ const EPILOGUE_FADE_MS = 2800;
 const EPILOGUE_HOLD_MS = 6200;
 const EPILOGUE_GAP_MS = 450;
 /** Delay between each word appearing in epilogue messages. */
-const EPILOGUE_WORD_DELAY_MS = 110;
+const EPILOGUE_WORD_DELAY_MS = 330;
 /** Extra hold (each) for epilogue slides 1–4 (indices 0–3); last slide unchanged */
 const EPILOGUE_EXTRA_FIRST_FOUR_MS = 4000;
 /** Final epilogue constellation spin (one turn); step 0 uses half this angular speed (double period). */
@@ -286,7 +286,7 @@ function EpilogueStaggeredMessage({ text, visible, className, style }) {
           key={`${i}-${word}`}
           style={{
             opacity: visible && i < shownCount ? 1 : 0,
-            transition: "opacity 0.42s ease",
+            transition: "opacity 1.26s ease",
           }}
         >
           {word}
