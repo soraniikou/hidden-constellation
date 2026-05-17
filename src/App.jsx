@@ -198,6 +198,50 @@ function buildEpilogueBackdrop(epilogueSlideIndex, easedRamp) {
   return `radial-gradient(ellipse 132% 100% at 50% 40%, rgb(${innerRgb}) 0%, rgb(${midRgb}) 46%, rgb(${outerRgb}) 100%)`;
 }
 
+const METEOR_WHITE_PALETTE = {
+  tail: "linear-gradient(90deg, rgba(255, 238, 248, 0.62) 0%, rgba(255, 210, 228, 0.38) 10%, rgba(255, 195, 215, 0.22) 26%, rgba(255, 185, 205, 0.12) 48%, rgba(255, 185, 205, 0.05) 68%, rgba(255, 190, 205, 0.02) 82%, rgba(255, 195, 215, 0.008) 92%, transparent 100%)",
+  tailShadow:
+    "0 0 22px 10px rgba(255, 205, 225, 0.28), 0 0 40px 18px rgba(255, 185, 210, 0.12), inset 0 0 14px rgba(255, 255, 255, 0.18)",
+  halo: "linear-gradient(90deg, rgba(255, 210, 228, 0.14) 0%, rgba(255, 200, 218, 0.06) 35%, rgba(255, 190, 210, 0.025) 65%, rgba(255, 188, 208, 0.01) 88%, transparent 100%)",
+  haloShadow: "0 0 24px 14px rgba(255, 200, 220, 0.12)",
+  head: "radial-gradient(circle at 30% 26%, #ffffff 0%, #fff5fb 35%, #ffd8ec 72%, #f0b8d8 100%)",
+  headShadow:
+    "0 0 8px 3px rgba(255, 245, 252, 0.95), 0 0 18px 8px rgba(255, 215, 235, 0.55), 0 0 32px 14px rgba(255, 190, 215, 0.35), inset 0 0 8px rgba(255, 255, 255, 0.9)",
+};
+
+const METEOR_YELLOW_PALETTES = [
+  {
+    tail: "linear-gradient(90deg, rgba(255, 248, 190, 0.7) 0%, rgba(255, 232, 150, 0.45) 10%, rgba(255, 215, 110, 0.26) 26%, rgba(255, 200, 90, 0.14) 48%, rgba(255, 190, 80, 0.06) 68%, rgba(255, 185, 75, 0.02) 82%, transparent 100%)",
+    tailShadow:
+      "0 0 22px 10px rgba(255, 220, 120, 0.32), 0 0 40px 18px rgba(255, 200, 90, 0.14), inset 0 0 14px rgba(255, 245, 200, 0.22)",
+    halo: "linear-gradient(90deg, rgba(255, 230, 150, 0.16) 0%, rgba(255, 210, 120, 0.07) 35%, rgba(255, 195, 100, 0.03) 65%, transparent 88%)",
+    haloShadow: "0 0 24px 14px rgba(255, 210, 110, 0.14)",
+    head: "radial-gradient(circle at 30% 26%, #fffef0 0%, #ffe9a8 35%, #ffd060 72%, #e8a830 100%)",
+    headShadow:
+      "0 0 8px 3px rgba(255, 248, 210, 0.95), 0 0 18px 8px rgba(255, 220, 130, 0.55), 0 0 32px 14px rgba(255, 190, 80, 0.38), inset 0 0 8px rgba(255, 255, 230, 0.85)",
+  },
+  {
+    tail: "linear-gradient(90deg, rgba(255, 242, 175, 0.68) 0%, rgba(255, 225, 135, 0.42) 10%, rgba(255, 205, 95, 0.24) 26%, rgba(245, 190, 70, 0.12) 48%, transparent 100%)",
+    tailShadow:
+      "0 0 24px 12px rgba(255, 210, 100, 0.3), 0 0 38px 16px rgba(255, 185, 70, 0.12), inset 0 0 12px rgba(255, 240, 180, 0.2)",
+    halo: "linear-gradient(90deg, rgba(255, 215, 130, 0.14) 0%, rgba(255, 195, 90, 0.06) 40%, transparent 85%)",
+    haloShadow: "0 0 26px 12px rgba(255, 200, 95, 0.13)",
+    head: "radial-gradient(circle at 30% 26%, #fffce8 0%, #ffdc88 38%, #ffc840 70%, #d49828 100%)",
+    headShadow:
+      "0 0 9px 3px rgba(255, 245, 200, 0.92), 0 0 20px 9px rgba(255, 205, 110, 0.5), 0 0 30px 12px rgba(255, 175, 60, 0.35)",
+  },
+  {
+    tail: "linear-gradient(90deg, rgba(255, 235, 160, 0.66) 0%, rgba(255, 218, 120, 0.4) 12%, rgba(255, 198, 85, 0.22) 30%, rgba(255, 180, 65, 0.1) 55%, transparent 100%)",
+    tailShadow:
+      "0 0 20px 9px rgba(255, 195, 85, 0.28), 0 0 36px 15px rgba(255, 170, 55, 0.11), inset 0 0 13px rgba(255, 230, 160, 0.18)",
+    halo: "linear-gradient(90deg, rgba(255, 205, 115, 0.13) 0%, rgba(255, 185, 80, 0.05) 38%, transparent 90%)",
+    haloShadow: "0 0 22px 13px rgba(255, 188, 88, 0.11)",
+    head: "radial-gradient(circle at 30% 26%, #fff9e0 0%, #ffe070 32%, #f5b838 68%, #c88820 100%)",
+    headShadow:
+      "0 0 8px 3px rgba(255, 238, 185, 0.9), 0 0 17px 7px rgba(255, 198, 95, 0.52), 0 0 28px 13px rgba(255, 168, 50, 0.32)",
+  },
+];
+
 /** Stable per-tag offset for scattered flaw-tag buttons on the building screen. */
 function flawTagScatter(tag) {
   let h = 0;
@@ -263,6 +307,8 @@ export default function HiddenConstellation() {
     () => typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches
   );
   const [meteorOrientDeg, setMeteorOrientDeg] = useState(() => Math.random() * 360);
+  const [meteorPass, setMeteorPass] = useState(1);
+  const [meteorYellowIdx, setMeteorYellowIdx] = useState(0);
   const [epilogueElapsedMs, setEpilogueElapsedMs] = useState(0);
 
   const total = 7;
@@ -448,8 +494,26 @@ export default function HiddenConstellation() {
   useEffect(() => {
     if (lastEpilogueMeteor) {
       setMeteorOrientDeg(Math.random() * 360);
+      setMeteorPass(1);
+      setMeteorYellowIdx(0);
     }
   }, [lastEpilogueMeteor]);
+
+  const meteorIsYellow = meteorPass % 4 === 0;
+  const meteorPalette = meteorIsYellow
+    ? METEOR_YELLOW_PALETTES[meteorYellowIdx % METEOR_YELLOW_PALETTES.length]
+    : METEOR_WHITE_PALETTE;
+
+  const handleMeteorIteration = () => {
+    setMeteorOrientDeg(Math.random() * 360);
+    setMeteorPass((p) => {
+      const next = p + 1;
+      if (next % 4 === 0) {
+        setMeteorYellowIdx(Math.floor(Math.random() * METEOR_YELLOW_PALETTES.length));
+      }
+      return next;
+    });
+  };
 
   /** Epilogue rotating scene: sky dark → navy cross-fade (12s) + brighten per slide (stage). */
   useEffect(() => {
@@ -731,7 +795,7 @@ export default function HiddenConstellation() {
             }}
           >
             <div
-              onAnimationIteration={() => setMeteorOrientDeg(Math.random() * 360)}
+              onAnimationIteration={handleMeteorIteration}
               style={{
                 position: "absolute",
                 left: 0,
@@ -755,10 +819,8 @@ export default function HiddenConstellation() {
                   borderRadius: "999px",
                   zIndex: 1,
                   filter: "blur(1.85px)",
-                  background:
-                    "linear-gradient(90deg, rgba(255, 238, 248, 0.62) 0%, rgba(255, 210, 228, 0.38) 10%, rgba(255, 195, 215, 0.22) 26%, rgba(255, 185, 205, 0.12) 48%, rgba(255, 185, 205, 0.05) 68%, rgba(255, 190, 205, 0.02) 82%, rgba(255, 195, 215, 0.008) 92%, transparent 100%)",
-                  boxShadow:
-                    "0 0 22px 10px rgba(255, 205, 225, 0.28), 0 0 40px 18px rgba(255, 185, 210, 0.12), inset 0 0 14px rgba(255, 255, 255, 0.18)",
+                  background: meteorPalette.tail,
+                  boxShadow: meteorPalette.tailShadow,
                 }}
               />
               <div
@@ -774,9 +836,8 @@ export default function HiddenConstellation() {
                   filter: "blur(4.5px)",
                   opacity: 0.5,
                   borderRadius: "999px",
-                  background:
-                    "linear-gradient(90deg, rgba(255, 210, 228, 0.14) 0%, rgba(255, 200, 218, 0.06) 35%, rgba(255, 190, 210, 0.025) 65%, rgba(255, 188, 208, 0.01) 88%, transparent 100%)",
-                  boxShadow: "0 0 24px 14px rgba(255, 200, 220, 0.12)",
+                  background: meteorPalette.halo,
+                  boxShadow: meteorPalette.haloShadow,
                   pointerEvents: "none",
                 }}
               />
@@ -790,9 +851,8 @@ export default function HiddenConstellation() {
                   marginTop: "-3.78px",
                   borderRadius: "50%",
                   zIndex: 2,
-                  background: "radial-gradient(circle at 30% 26%, #ffffff 0%, #fff5fb 35%, #ffd8ec 72%, #f0b8d8 100%)",
-                  boxShadow:
-                    "0 0 8px 3px rgba(255, 245, 252, 0.95), 0 0 18px 8px rgba(255, 215, 235, 0.55), 0 0 32px 14px rgba(255, 190, 215, 0.35), inset 0 0 8px rgba(255, 255, 255, 0.9)",
+                  background: meteorPalette.head,
+                  boxShadow: meteorPalette.headShadow,
                 }}
               />
             </div>
