@@ -388,8 +388,6 @@ export default function HiddenConstellation() {
 
   /** Pink stars: 5+ inputs (5th star onward); core display logic unchanged. */
   const pinkStarsActive = count >= 5;
-  /** Shooting star while a completion message is visible and pink is active. */
-  const lastEpilogueMeteor = pinkStarsActive && showComplete && epilogueVisible;
   const lastEpiloguePinkStars = pinkStarsActive;
   /** Darker last-epilogue pink on mobile only (desktop unchanged). */
   const lastPinkMobileDark = lastEpiloguePinkStars && isMobileLayout;
@@ -549,12 +547,12 @@ export default function HiddenConstellation() {
   }, []);
 
   useEffect(() => {
-    if (lastEpilogueMeteor) {
+    if (mood) {
       setMeteorOrientDeg(Math.random() * 360);
       setMeteorPass(1);
       setMeteorYellowIdx(0);
     }
-  }, [lastEpilogueMeteor]);
+  }, [mood]);
 
   const meteorIsYellow = meteorPass % 4 === 0;
   const meteorPalette = meteorIsYellow
@@ -763,7 +761,10 @@ export default function HiddenConstellation() {
           letter-spacing: 0.06em;
         }
         .finish-early-btn {
-          display: block;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0.75rem;
           width: 100%;
           margin-top: 0.65rem;
           background: transparent;
@@ -777,6 +778,15 @@ export default function HiddenConstellation() {
           letter-spacing: 0.04em;
           font-style: italic;
           transition: border-color 0.35s, color 0.35s, box-shadow 0.35s;
+        }
+        .finish-early-tap {
+          flex-shrink: 0;
+          font-style: normal;
+          letter-spacing: 0.06em;
+          color: rgba(195, 215, 255, 0.52);
+        }
+        .finish-early-btn:hover .finish-early-tap {
+          color: rgba(228, 238, 255, 0.72);
         }
         .finish-early-btn:hover {
           border-color: rgba(200, 220, 255, 0.32);
@@ -828,7 +838,7 @@ export default function HiddenConstellation() {
         ))}
       </div>
 
-      {mood && lastEpilogueMeteor && (
+      {mood && (
         <div
           aria-hidden
           style={{
@@ -1184,30 +1194,16 @@ export default function HiddenConstellation() {
               padding:"0.85rem 1.1rem", marginBottom:"0.85rem",
               backdropFilter:"blur(6px)",
             }}>
-<div style={{display:"flex",gap:"0.55rem",alignItems:"center"}}>
                 <input ref={inputRef} value={input}
                   onChange={e=>setInput(e.target.value)}
                   onKeyDown={e=>e.key==="Enter"&&addFlaw(input)}
                   placeholder="type a flaw you carry…"
                   style={{
-                    flex:1, background:"transparent", border:"none",
+                    width:"100%", background:"transparent", border:"none",
                     color:"rgba(232,240,255,0.98)",
                     fontFamily:"'Georgia',serif",
                     fontSize:"clamp(0.88rem, 0.72rem + 0.85vw, 0.94rem)",
                   }}/>
-                <button onClick={()=>addFlaw(input)} disabled={!input.trim()} style={{
-                  background:input.trim()
-                    ?"linear-gradient(135deg,rgba(70,110,200,0.65),rgba(110,70,200,0.65))"
-                    :"rgba(40,40,80,0.32)",
-                  border:"none",
-                  color:input.trim()?"#e4ecff":"rgba(160,185,230,0.45)",
-                  padding:"0.44rem 0.95rem",
-                  borderRadius:"2px 10px 2px 8px",
-                  cursor:input.trim()?"pointer":"default",
-                  fontFamily:"'Georgia',serif", fontSize:"0.8rem",
-                  transition:"all 0.3s ease", whiteSpace:"nowrap",
-                }}>+ Star</button>
-              </div>
             </div>
 
             {count >= 3 && (
@@ -1216,7 +1212,8 @@ export default function HiddenConstellation() {
                 className="finish-early-btn"
                 onClick={finishConstellation}
               >
-                let this be my constellation
+                <span>let this be my constellation</span>
+                <span className="finish-early-tap">→ tap</span>
               </button>
             )}
 
