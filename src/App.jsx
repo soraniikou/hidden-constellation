@@ -831,11 +831,12 @@ export default function HiddenConstellation() {
         {/* SVG */}
         <div style={{ display:"flex", justifyContent:"center", marginBottom:"1.2rem" }}>
           <div style={{
-            background:"rgba(7,5,20,0.78)",
-            border:"1px solid rgba(100,140,220,0.11)",
-            borderRadius:"14px",
+            background: showComplete ? "rgba(0, 0, 0, 0.4)" : "rgba(7,5,20,0.78)",
+            border: showComplete ? "none" : "1px solid rgba(100,140,220,0.11)",
+            borderRadius: showComplete ? "50%" : "14px",
             padding: showComplete ? "1.35rem" : "0.9rem",
-            backdropFilter:"blur(10px)",
+            backdropFilter: showComplete ? undefined : "blur(10px)",
+            boxShadow: showComplete ? "0 0 40px rgba(0, 0, 0, 0.5)" : undefined,
             overflow: showComplete ? "visible" : "hidden",
           }}>
             <div
