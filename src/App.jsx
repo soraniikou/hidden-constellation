@@ -581,20 +581,16 @@ export default function HiddenConstellation() {
           color:rgba(215,228,255,0.95)!important;
         }
         .flaw-tags-scroll {
-          display: flex;
-          flex-wrap: nowrap;
-          overflow-x: auto;
-          gap: 0.55rem;
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 0.42rem 0.36rem;
           padding: 0.6rem 0.35rem 0.2rem;
           width: 100%;
-          scrollbar-width: none;
-          -ms-overflow-style: none;
-        }
-        .flaw-tags-scroll::-webkit-scrollbar {
-          display: none;
+          overflow: visible;
         }
         .flaw-tags-scroll .flaw-tag {
-          flex-shrink: 0;
+          justify-self: center;
+          max-width: 100%;
         }
         input::placeholder{ color:rgba(255,255,255,0.95) !important; }
         input:focus{ outline:none; }
