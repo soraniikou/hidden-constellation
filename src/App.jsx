@@ -370,8 +370,8 @@ export default function HiddenConstellation() {
 
   const total = 7;
   const count = flaws.length;
-  const svgW = 300;
-  const svgH = 320;
+  const svgW = isMobileLayout ? 210 : 300;
+  const svgH = isMobileLayout ? 224 : 320;
   const pos = (star) => ({ x: star.x * svgW, y: star.y * svgH });
 
   const visibleFlawTags = useMemo(
@@ -720,6 +720,18 @@ export default function HiddenConstellation() {
             word-spacing: 0.18em !important;
             text-wrap: balance;
           }
+          .flaw-tags-scroll {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.55rem 0.42rem;
+          }
+          .flaw-tags-scroll .flaw-tag {
+            width: 100%;
+            min-width: 0;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
         }
         .epilogue-main-text {
           word-spacing: 0.56em;
@@ -961,7 +973,9 @@ export default function HiddenConstellation() {
             background: showComplete ? "rgba(0, 0, 0, 0.4)" : "rgba(7,5,20,0.78)",
             border: showComplete ? "none" : "1px solid rgba(100,140,220,0.11)",
             borderRadius: showComplete ? "50%" : "14px",
-            padding: showComplete ? "1.35rem" : "0.9rem",
+            padding: showComplete
+              ? (isMobileLayout ? "0.945rem" : "1.35rem")
+              : (isMobileLayout ? "0.63rem" : "0.9rem"),
             backdropFilter: showComplete ? undefined : "blur(10px)",
             boxShadow: showComplete ? "0 0 40px rgba(0, 0, 0, 0.5)" : undefined,
             overflow: showComplete ? "visible" : "hidden",
@@ -1034,12 +1048,12 @@ export default function HiddenConstellation() {
 
               {/* Complete glow */}
               {phase==="complete" && (
-                <circle cx={svgW/2} cy={svgH/2} r={85}
+                <circle cx={svgW/2} cy={svgH/2} r={isMobileLayout ? 60 : 85}
                   fill="none"
                   stroke={lastEpiloguePinkStars
                     ? (lastPinkMobileDark ? "rgba(150, 60, 90, 0.14)" : "rgba(255, 130, 175, 0.16)")
                     : "rgba(168,200,255,0.07)"}
-                  strokeWidth={80}
+                  strokeWidth={isMobileLayout ? 56 : 80}
                   style={{
                     animation: "completeGlow 3s ease-in-out infinite",
                     transition: "stroke 2.2s ease",
