@@ -140,8 +140,10 @@ const complexToSignature = (text) => {
 const pickRandom = () => CONSTELLATIONS[Math.floor(Math.random() * CONSTELLATIONS.length)];
 
 const EPILOGUE_FADE_MS = 2800;
-const EPILOGUE_HOLD_MS = 5200;
+const EPILOGUE_HOLD_MS = 6200;
 const EPILOGUE_GAP_MS = 450;
+/** Delay between each word appearing in epilogue messages. */
+const EPILOGUE_WORD_DELAY_MS = 110;
 /** Extra hold (each) for epilogue slides 1–4 (indices 0–3); last slide unchanged */
 const EPILOGUE_EXTRA_FIRST_FOUR_MS = 4000;
 /** Final epilogue constellation spin (one turn); step 0 uses half this angular speed (double period). */
@@ -241,6 +243,59 @@ const METEOR_YELLOW_PALETTES = [
       "0 0 8px 3px rgba(255, 238, 185, 0.9), 0 0 17px 7px rgba(255, 198, 95, 0.52), 0 0 28px 13px rgba(255, 168, 50, 0.32)",
   },
 ];
+
+/** Epilogue line: reveal words one at a time while the slide is visible. */
+function EpilogueStaggeredMessage({ text, visible, className, style }) {
+  const words = useMemo(
+    () => (text ? text.trim().split(/\s+/).filter(Boolean) : []),
+    [text],
+  );
+  const [shownCount, setShownCount] = useState(0);
+
+  useEffect(() => {
+    if (!visible || words.length === 0) {
+      setShownCount(0);
+      return;
+    }
+
+    setShownCount(0);
+    let cancelled = false;
+    let timerId = 0;
+    let i = 0;
+
+    const tick = () => {
+      if (cancelled) return;
+      i += 1;
+      setShownCount(i);
+      if (i < words.length) {
+        timerId = window.setTimeout(tick, EPILOGUE_WORD_DELAY_MS);
+      }
+    };
+
+    timerId = window.setTimeout(tick, EPILOGUE_WORD_DELAY_MS);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timerId);
+    };
+  }, [text, visible, words]);
+
+  return (
+    <p className={className} style={style}>
+      {words.map((word, i) => (
+        <span
+          key={`${i}-${word}`}
+          style={{
+            opacity: visible && i < shownCount ? 1 : 0,
+            transition: "opacity 0.42s ease",
+          }}
+        >
+          {word}
+          {i < words.length - 1 ? " " : ""}
+        </span>
+      ))}
+    </p>
+  );
+}
 
 /** Stable per-tag offset for scattered flaw-tag buttons on the building screen. */
 function flawTagScatter(tag) {
@@ -1078,8 +1133,14 @@ export default function HiddenConstellation() {
             justifyContent: "center",
             padding: "0 0.25rem",
           }}>
-            <p
-              key={epilogueStep}
+            <EpilogueStaggeredMessage
+              key={earlyComplete ? `early-${count}` : epilogueStep}
+              text={
+                earlyComplete
+                  ? getMoodMessage(mood, count, messages)
+                  : epilogueMessages[epilogueStep]
+              }
+              visible={epilogueVisible}
               className="epilogue-main-text"
               style={{
                 fontSize: "clamp(1.236rem, 4.166vw, 1.505rem)",
@@ -1093,11 +1154,7 @@ export default function HiddenConstellation() {
                 transition: `opacity ${EPILOGUE_FADE_MS}ms ease-in-out`,
                 textShadow: "0 0 28px rgba(90, 120, 200, 0.12)",
               }}
-            >
-              {earlyComplete
-                ? getMoodMessage(mood, count, messages)
-                : epilogueMessages[epilogueStep]}
-            </p>
+            />
           </div>
         )}
 
