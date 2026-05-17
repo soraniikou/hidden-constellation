@@ -580,6 +580,22 @@ export default function HiddenConstellation() {
           border-color:rgba(168,200,255,0.42)!important;
           color:rgba(215,228,255,0.95)!important;
         }
+        .flaw-tags-scroll {
+          display: flex;
+          flex-wrap: nowrap;
+          overflow-x: auto;
+          gap: 0.55rem;
+          padding: 0.6rem 0.35rem 0.2rem;
+          width: 100%;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+        .flaw-tags-scroll::-webkit-scrollbar {
+          display: none;
+        }
+        .flaw-tags-scroll .flaw-tag {
+          flex-shrink: 0;
+        }
         input::placeholder{ color:rgba(255,255,255,0.95) !important; }
         input:focus{ outline:none; }
         @media (max-width: 640px) {
@@ -1086,15 +1102,7 @@ export default function HiddenConstellation() {
               </button>
             )}
 
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
-              columnGap: "2.3rem",
-              rowGap: "2rem",
-              padding: "0.6rem 0.35rem 0.2rem",
-              width: "100%",
-              justifyItems: "center",
-            }}>
+            <div className="flaw-tags-scroll">
               {visibleFlawTags.map((tag) => (
                   <button
                     key={tag}
