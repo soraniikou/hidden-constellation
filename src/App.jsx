@@ -819,10 +819,10 @@ export default function HiddenConstellation() {
           flex-shrink: 0;
           font-style: normal;
           letter-spacing: 0.06em;
-          color: rgba(195, 215, 255, 0.52);
+          color: rgba(228, 238, 255, 0.88);
         }
         .finish-early-btn:hover .finish-early-tap {
-          color: rgba(228, 238, 255, 0.72);
+          color: rgba(245, 250, 255, 0.98);
         }
         .finish-early-btn:hover {
           border-color: rgba(200, 220, 255, 0.32);
