@@ -711,6 +711,30 @@ export default function HiddenConstellation() {
           justify-self: center;
           max-width: 100%;
         }
+        .flaw-tags-row3 {
+          display: contents;
+        }
+        @media (min-width: 641px) {
+          .hc-main-column {
+            overflow: visible;
+          }
+          .flaw-tags-row3 {
+            display: grid;
+            grid-column: 1 / -1;
+            grid-template-columns: repeat(4, minmax(max-content, 1fr));
+            gap: 0.42rem 0.5rem;
+            width: min(100vw - 2.5rem, 36rem);
+            margin-left: 50%;
+            transform: translateX(-50%);
+            justify-items: center;
+            box-sizing: border-box;
+          }
+          .flaw-tags-row3 .flaw-tag {
+            justify-self: center;
+            width: auto;
+            max-width: none;
+          }
+        }
         input::placeholder{ color:rgba(255,255,255,0.95) !important; }
         input:focus{ outline:none; }
         @media (max-width: 640px) {
@@ -940,7 +964,7 @@ export default function HiddenConstellation() {
       )}
 
       {mood && (
-      <div style={{ position:"relative", zIndex:2, width:"100%", maxWidth:"440px" }}>
+      <div className="hc-main-column" style={{ position:"relative", zIndex:2, width:"100%", maxWidth:"440px" }}>
 
         {/* Title */}
         <div style={{ textAlign:"center", marginBottom:"1.4rem" }}>
@@ -1232,7 +1256,7 @@ export default function HiddenConstellation() {
             )}
 
             <div className="flaw-tags-scroll">
-              {visibleFlawTags.map((tag) => (
+              {visibleFlawTags.slice(0, 8).map((tag) => (
                   <button
                     key={tag}
                     className="flaw-tag"
@@ -1252,6 +1276,30 @@ export default function HiddenConstellation() {
                     {tag}
                   </button>
               ))}
+              {visibleFlawTags.length > 8 && (
+                <div className="flaw-tags-row3">
+                  {visibleFlawTags.slice(8).map((tag) => (
+                    <button
+                      key={tag}
+                      className="flaw-tag"
+                      onClick={() => addFlaw(tag)}
+                      style={{
+                        background:"rgba(50,70,130,0.16)",
+                        border:"1px solid rgba(100,140,220,0.14)",
+                        color:"rgba(165,192,232,0.58)",
+                        padding:"0.25rem 0.68rem",
+                        borderRadius:"1px 7px 1px 5px",
+                        cursor:"pointer",
+                        fontFamily:"'Georgia', serif",
+                        fontSize:"clamp(0.86rem, 0.58rem + 1.35vw, 0.96rem)",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
